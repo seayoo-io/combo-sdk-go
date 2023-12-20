@@ -5,23 +5,23 @@ import (
 	"crypto/sha256"
 )
 
-type GameID struct {
-	ID string
+type GameId struct {
+	Id string
 }
 
 type SecretKey struct {
 	Key []byte
 }
 
-func (gid GameID) String() string {
-	return gid.ID
+func (gid GameId) String() string {
+	return gid.Id
 }
 
 func (sk SecretKey) String() string {
 	return string(sk.Key)
 }
 
-func (sk SecretKey) HMACSHA256(data []byte) []byte {
+func (sk SecretKey) HmacSha256(data []byte) []byte {
 	hash := hmac.New(sha256.New, sk.Key)
 	hash.Write(data)
 	return hash.Sum(nil)
