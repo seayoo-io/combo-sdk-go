@@ -1,3 +1,9 @@
 .idea/
 .vscode/
 vendor/
+
+# This repo does not need main.go
+main.go
+
+# Binary
+combo-sdk-go

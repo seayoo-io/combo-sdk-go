@@ -21,8 +21,8 @@ const (
 	// timeFormat is the ISO 8601 format string for the signing timestamp
 	timeFormat = "20060102T150405Z"
 
-	// emptyStringSHA256 is the hex encoded sha256 value of an empty string
-	emptyStringSHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+	// emptyStringSha256 is the hex encoded sha256 value of an empty string
+	emptyStringSha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
 	// maxTimeDiff is the maximum allowed time difference between the signing time and the current time
 	maxTimeDiff = time.Minute * 5
@@ -106,7 +106,9 @@ func (s *signer) computeSignature(stringToSign string) string {
 }
 
 func (s *signer) buildAuthorizationHeader(timestamp, signature string) string {
-	return fmt.Sprintf("%s Game=%s, Timestamp=%s, Signature=%s",
+	// TODO: include space between parameters
+	// return fmt.Sprintf("%s Game=%s, Timestamp=%s, Signature=%s",
+	return fmt.Sprintf("%s Game=%s,Timestamp=%s,Signature=%s",
 		signingAlgorithm,
 		s.gameId.Id,
 		timestamp,
@@ -134,7 +136,7 @@ func buildStringToSign(r *http.Request, timestamp string) (string, error) {
 
 func computePayloadHash(r *http.Request) (string, error) {
 	if r.Body == nil {
-		return emptyStringSHA256, nil
+		return emptyStringSha256, nil
 	}
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
