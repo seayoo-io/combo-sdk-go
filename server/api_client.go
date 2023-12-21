@@ -56,12 +56,14 @@ func NewClient(o Options) (Client, error) {
 		o.Signer = signer
 	}
 	return &client{
-		options: o,
+		options:   o,
+		userAgent: combo.UserAgent(o.GameId),
 	}, nil
 }
 
 type client struct {
-	options Options
+	options   Options
+	userAgent string
 }
 
 func (c *client) callApi(ctx context.Context, api string, params any, result combo.ComboResponse) error {
@@ -104,7 +106,7 @@ func (c *client) newHttpRequest(ctx context.Context, api string, params any) (*h
 	if err != nil {
 		return nil, err
 	}
-	setRequestHeaders(req)
+	c.setRequestHeaders(req)
 	err = c.signRequest(req)
 	if err != nil {
 		return nil, err
@@ -112,12 +114,11 @@ func (c *client) newHttpRequest(ctx context.Context, api string, params any) (*h
 	return req, nil
 }
 
-func (c *client) signRequest(req *http.Request) error {
-	return c.options.Signer.SignHttp(req, time.Now())
+func (c *client) setRequestHeaders(req *http.Request) {
+	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("Content-Type", "application/json")
 }
 
-func setRequestHeaders(req *http.Request) {
-	// TODO: set User-Agent
-	// req.Header.Set("User-Agent", "")
-	req.Header.Set("Content-Type", "application/json")
+func (c *client) signRequest(req *http.Request) error {
+	return c.options.Signer.SignHttp(req, time.Now())
 }
