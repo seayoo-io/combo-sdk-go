@@ -4,11 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -30,28 +28,8 @@ type Client interface {
 
 // NewClient 创建一个新的 Server API 的 client
 func NewClient(o Options) (Client, error) {
-	if o.Endpoint == "" {
-		return nil, errors.New("missing required Endpoint")
-	}
-	o.Endpoint = Endpoint(strings.TrimSuffix(string(o.Endpoint), "/"))
-	if o.GameId == "" {
-		return nil, errors.New("missing required GameId")
-	}
-	if o.SecretKey == nil || len(o.SecretKey) == 0 {
-		return nil, errors.New("missing required SecretKey")
-	}
-	if !strings.HasPrefix(string(o.SecretKey), "sk_") {
-		return nil, errors.New("invalid SecretKey: must start with sk_")
-	}
-	if o.HttpClient == nil {
-		o.HttpClient = &http.Client{}
-	}
-	if o.HttpSigner == nil {
-		signer, err := NewHttpSigner(o.GameId, o.SecretKey)
-		if err != nil {
-			return nil, err
-		}
-		o.HttpSigner = signer
+	if err := o.init(); err != nil {
+		return nil, err
 	}
 	return &client{
 		options:   o,
