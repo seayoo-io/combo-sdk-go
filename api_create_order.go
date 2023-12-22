@@ -21,43 +21,43 @@ type CreateOrderInput struct {
 	NotifyUrl string `json:"notify_url"`
 
 	// 要购买的商品的数量。
-	Quantity int `json:"quantity"`
+	Quantity int `json:"quantity,omitempty"`
 
 	// 订单上下文，在发货通知中透传回游戏。
-	Context string `json:"context"`
+	Context string `json:"context,omitempty"`
 
 	// 订单的元数据。
-	Meta OrderMeta `json:"meta"`
+	Meta OrderMeta `json:"meta,omitempty"`
 }
 
 type OrderMeta struct {
 	// 游戏大区 ID。
 	// 用于数据分析与查询。
-	ZoneId string `json:"zone_id"`
+	ZoneId string `json:"zone_id,omitempty"`
 
 	// 游戏服务器 ID。
 	// 用于数据分析与查询。
-	ServerId string `json:"server_id"`
+	ServerId string `json:"server_id,omitempty"`
 
 	// 游戏角色 ID。
 	// 用于数据分析与查询。
-	RoleId string `json:"role_id"`
+	RoleId string `json:"role_id,omitempty"`
 
 	// 游戏角色名。
 	// 用于数据分析与查询。
-	RoleName string `json:"role_name"`
+	RoleName string `json:"role_name,omitempty"`
 
 	// 游戏角色的等级。
 	// 用于数据分析与查询。
-	RoleLevel int `json:"role_level"`
+	RoleLevel int `json:"role_level,omitempty"`
 
 	// 微信小游戏的 App ID。
 	// 微信小游戏的 iOS 支付场景必须传入，即 Platform == Platform_Weixin
-	WeixinAppid string `json:"weixin_appid"`
+	WeixinAppid string `json:"weixin_appid,omitempty"`
 
 	// 微信小游戏的玩家 OpenID。
 	// 微信小游戏的 iOS 支付场景必须传入，即 Platform == Platform_Weixin
-	WeixinOpenid string `json:"weixin_openid"`
+	WeixinOpenid string `json:"weixin_openid,omitempty"`
 }
 
 type CreateOrderOutput struct {
