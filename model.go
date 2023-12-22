@@ -6,12 +6,12 @@ import (
 	"fmt"
 )
 
-var (
+const (
 	// 中国大陆 API 端点，用于国内发行
-	EndpointChina Endpoint = Endpoint{Url: "https://api.seayoo.com"}
+	EndpointChina Endpoint = "https://api.seayoo.com"
 
 	// 全球的 API 端点，用于海外发行
-	EndpointGlobal Endpoint = Endpoint{Url: "https://api.seayoo.io"}
+	EndpointGlobal Endpoint = "https://api.seayoo.io"
 )
 
 const (
@@ -31,38 +31,37 @@ const (
 	Platform_Weixin Platform = "weixin"
 )
 
+// 游戏客户端运行平台
 type Platform string
 
-type Endpoint struct {
-	Url string
-}
+// Combo API 端点
+type Endpoint string
 
-type GameId struct {
-	Id string
-}
+// 由世游为游戏分配，用于标识游戏的业务代号。
+type GameId string
 
-type SecretKey struct {
-	Key []byte
-}
+// 由世游侧为游戏分配，游戏侧和世游侧共享的密钥。
+// 此密钥用于签名计算与验证。
+type SecretKey []byte
 
 func (e Endpoint) String() string {
-	return e.Url
+	return string(e)
 }
 
-func (e Endpoint) apiUrl(api string) string {
-	return fmt.Sprintf("%s/v3/server/%s", e.Url, api)
+func (e Endpoint) url(api string) string {
+	return fmt.Sprintf("%s/v3/server/%s", e, api)
 }
 
 func (gid GameId) String() string {
-	return gid.Id
+	return string(gid)
 }
 
 func (sk SecretKey) String() string {
-	return string(sk.Key)
+	return string(sk)
 }
 
-func (sk SecretKey) HmacSha256(data []byte) []byte {
-	hash := hmac.New(sha256.New, sk.Key)
+func (sk SecretKey) hmacSha256(data []byte) []byte {
+	hash := hmac.New(sha256.New, sk)
 	hash.Write(data)
 	return hash.Sum(nil)
 }

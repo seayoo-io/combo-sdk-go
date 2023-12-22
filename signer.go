@@ -99,7 +99,7 @@ func (s *signer) AuthHttp(r *http.Request, currentTime time.Time) error {
 }
 
 func (s *signer) computeSignature(stringToSign string) string {
-	sig := s.secretKey.HmacSha256([]byte(stringToSign))
+	sig := s.secretKey.hmacSha256([]byte(stringToSign))
 	return hex.EncodeToString(sig)
 }
 
@@ -108,7 +108,7 @@ func (s *signer) buildAuthorizationHeader(timestamp, signature string) string {
 	// return fmt.Sprintf("%s Game=%s, Timestamp=%s, Signature=%s",
 	return fmt.Sprintf("%s Game=%s,Timestamp=%s,Signature=%s",
 		signingAlgorithm,
-		s.gameId.Id,
+		s.gameId,
 		timestamp,
 		signature,
 	)
@@ -170,7 +170,7 @@ func parseAuthorizationHeader(header string) (*authorization, error) {
 		kv[1] = strings.Trim(kv[1], ` "`)
 		switch kv[0] {
 		case "Game":
-			auth.game = GameId{Id: kv[1]}
+			auth.game = GameId(kv[1])
 		case "Timestamp":
 			t, err := time.Parse(timeFormat, kv[1])
 			if err != nil {

@@ -30,17 +30,17 @@ type Client interface {
 
 // NewClient 创建一个新的 Server API 的 client
 func NewClient(o Options) (Client, error) {
-	if o.Endpoint.Url == "" {
+	if o.Endpoint == "" {
 		return nil, errors.New("missing required Endpoint")
 	}
-	o.Endpoint.Url = strings.TrimSuffix(o.Endpoint.Url, "/")
-	if o.GameId.Id == "" {
+	o.Endpoint = Endpoint(strings.TrimSuffix(string(o.Endpoint), "/"))
+	if o.GameId == "" {
 		return nil, errors.New("missing required GameId")
 	}
-	if o.SecretKey.Key == nil || len(o.SecretKey.Key) == 0 {
+	if o.SecretKey == nil || len(o.SecretKey) == 0 {
 		return nil, errors.New("missing required SecretKey")
 	}
-	if !strings.HasPrefix(string(o.SecretKey.Key), "sk_") {
+	if !strings.HasPrefix(string(o.SecretKey), "sk_") {
 		return nil, errors.New("invalid SecretKey: must start with sk_")
 	}
 	if o.HttpClient == nil {
@@ -99,7 +99,7 @@ func (c *client) newHttpRequest(ctx context.Context, api string, params any) (*h
 	if err != nil {
 		return nil, err
 	}
-	url := c.options.Endpoint.apiUrl(api)
+	url := c.options.Endpoint.url(api)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
