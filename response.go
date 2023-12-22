@@ -13,7 +13,7 @@ const (
 )
 
 type httpResponseReader interface {
-	ReadResponse(resp *http.Response) error
+	readResponse(resp *http.Response) error
 }
 
 type baseResponse struct {
@@ -24,7 +24,7 @@ type baseResponse struct {
 	traceId string
 }
 
-func (b *baseResponse) ReadResponse(resp *http.Response) error {
+func (b *baseResponse) readResponse(resp *http.Response) error {
 	b.statusCode = resp.StatusCode
 	b.traceId = resp.Header.Get(traceIdHeader)
 	return nil
@@ -50,8 +50,8 @@ func (e *ErrorResponse) Error() string {
 		e.StatusCode(), e.TraceId(), e.ErrorCode, e.ErrorMessage)
 }
 
-func (b *ErrorResponse) ReadResponse(resp *http.Response) error {
-	if err := b.baseResponse.ReadResponse(resp); err != nil {
+func (b *ErrorResponse) readResponse(resp *http.Response) error {
+	if err := b.baseResponse.readResponse(resp); err != nil {
 		return err
 	}
 	body, err := io.ReadAll(resp.Body)

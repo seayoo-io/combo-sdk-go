@@ -55,13 +55,13 @@ func (c *client) callApi(ctx context.Context, api string, params any, result htt
 
 	if resp.StatusCode != http.StatusOK {
 		errorResponse := &ErrorResponse{}
-		if err := errorResponse.ReadResponse(resp); err != nil {
+		if err := errorResponse.readResponse(resp); err != nil {
 			return fmt.Errorf("error reading error response: %w", err)
 		}
 		return errorResponse
 	}
 
-	if err := result.ReadResponse(resp); err != nil {
+	if err := result.readResponse(resp); err != nil {
 		return fmt.Errorf("error reading response: %w", err)
 	}
 	body, err := io.ReadAll(resp.Body)
