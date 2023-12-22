@@ -53,8 +53,8 @@ build: ## Build go source code
 	@go build .
 
 .PHONY: run
-run: ## Run main.go
-	@go run main.go
+run: ## Run cmd/main.go
+	@go run cmd/main.go
 
 .PHONY: help
 help:

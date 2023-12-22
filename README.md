@@ -2,9 +2,7 @@
 
 `combo-sdk-go` 是世游核心系统 (Combo) 为 Go 提供的 SDK。
 
-## 服务端
-
-面向服务端提供以下功能，供游戏侧使用：
+提供以下服务端功能，供游戏侧使用：
 
 - 请求 Server REST API 并解析响应
 - 接收 Server Notifications 并回复响应

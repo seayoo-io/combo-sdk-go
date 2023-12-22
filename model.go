@@ -49,7 +49,7 @@ func (e Endpoint) String() string {
 	return e.Url
 }
 
-func (e Endpoint) ServerApiUrl(api string) string {
+func (e Endpoint) apiUrl(api string) string {
 	return fmt.Sprintf("%s/v3/server/%s", e.Url, api)
 }
 

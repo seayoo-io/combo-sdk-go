@@ -1,9 +1,7 @@
-package server
+package combo
 
 import (
 	"context"
-
-	"github.com/seayoo-io/combo-sdk-go/combo"
 )
 
 type CreateOrderInput struct {
@@ -17,7 +15,7 @@ type CreateOrderInput struct {
 	ProductId string `json:"product_id"`
 
 	// 客户端的运行平台。
-	Platform combo.Platform `json:"platform"`
+	Platform Platform `json:"platform"`
 
 	// 游戏侧异步接收发货通知的地址。
 	NotifyUrl string `json:"notify_url"`
@@ -54,16 +52,16 @@ type OrderMeta struct {
 	RoleLevel int `json:"role_level"`
 
 	// 微信小游戏的 App ID。
-	// 微信小游戏的 iOS 支付场景必须传入，即 Platform == combo.Platform_Weixin
+	// 微信小游戏的 iOS 支付场景必须传入，即 Platform == Platform_Weixin
 	WeixinAppid string `json:"weixin_appid"`
 
 	// 微信小游戏的玩家 OpenID。
-	// 微信小游戏的 iOS 支付场景必须传入，即 Platform == combo.Platform_Weixin
+	// 微信小游戏的 iOS 支付场景必须传入，即 Platform == Platform_Weixin
 	WeixinOpenid string `json:"weixin_openid"`
 }
 
 type CreateOrderOutput struct {
-	combo.BaseResponse
+	baseResponse
 
 	// 世游服务端创建的，标识订单的唯一 ID。
 	OrderId string `json:"order_id"`

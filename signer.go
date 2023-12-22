@@ -1,4 +1,4 @@
-package server
+package combo
 
 import (
 	"bytes"
@@ -10,8 +10,6 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/seayoo-io/combo-sdk-go/combo"
 )
 
 const (
@@ -38,7 +36,7 @@ type HttpSigner interface {
 }
 
 // NewHttpSigner creates a new HTTPSigner
-func NewHttpSigner(gameId combo.GameId, secretKey combo.SecretKey) (HttpSigner, error) {
+func NewHttpSigner(gameId GameId, secretKey SecretKey) (HttpSigner, error) {
 	return &signer{
 		gameId:    gameId,
 		secretKey: secretKey,
@@ -46,13 +44,13 @@ func NewHttpSigner(gameId combo.GameId, secretKey combo.SecretKey) (HttpSigner, 
 }
 
 type signer struct {
-	gameId    combo.GameId
-	secretKey combo.SecretKey
+	gameId    GameId
+	secretKey SecretKey
 }
 
 type authorization struct {
 	scheme    string
-	game      combo.GameId
+	game      GameId
 	timestamp time.Time
 	signature string
 }
@@ -172,7 +170,7 @@ func parseAuthorizationHeader(header string) (*authorization, error) {
 		kv[1] = strings.Trim(kv[1], ` "`)
 		switch kv[0] {
 		case "Game":
-			auth.game = combo.GameId{Id: kv[1]}
+			auth.game = GameId{Id: kv[1]}
 		case "Timestamp":
 			t, err := time.Parse(timeFormat, kv[1])
 			if err != nil {

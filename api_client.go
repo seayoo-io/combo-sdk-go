@@ -1,4 +1,4 @@
-package server
+package combo
 
 import (
 	"bytes"
@@ -10,8 +10,6 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/seayoo-io/combo-sdk-go/combo"
 )
 
 // Client 是一个用来调用 Combo Server API 的 API client
@@ -48,16 +46,16 @@ func NewClient(o Options) (Client, error) {
 	if o.HttpClient == nil {
 		o.HttpClient = &http.Client{}
 	}
-	if o.Signer == nil {
+	if o.HttpSigner == nil {
 		signer, err := NewHttpSigner(o.GameId, o.SecretKey)
 		if err != nil {
 			return nil, err
 		}
-		o.Signer = signer
+		o.HttpSigner = signer
 	}
 	return &client{
 		options:   o,
-		userAgent: combo.UserAgent(o.GameId),
+		userAgent: userAgent(o.GameId),
 	}, nil
 }
 
@@ -66,7 +64,7 @@ type client struct {
 	userAgent string
 }
 
-func (c *client) callApi(ctx context.Context, api string, params any, result combo.ComboResponse) error {
+func (c *client) callApi(ctx context.Context, api string, params any, result httpResponseReader) error {
 	req, err := c.newHttpRequest(ctx, api, params)
 	if err != nil {
 		return err
@@ -78,14 +76,14 @@ func (c *client) callApi(ctx context.Context, api string, params any, result com
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		errorResponse := &combo.ErrorResponse{}
-		if err := errorResponse.ReadHttp(resp); err != nil {
+		errorResponse := &ErrorResponse{}
+		if err := errorResponse.ReadResponse(resp); err != nil {
 			return fmt.Errorf("error reading error response: %w", err)
 		}
 		return errorResponse
 	}
 
-	result.ReadHttp(resp)
+	result.ReadResponse(resp)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("error reading response body: %w", err)
@@ -101,7 +99,7 @@ func (c *client) newHttpRequest(ctx context.Context, api string, params any) (*h
 	if err != nil {
 		return nil, err
 	}
-	url := c.options.Endpoint.ServerApiUrl(api)
+	url := c.options.Endpoint.apiUrl(api)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
@@ -120,5 +118,5 @@ func (c *client) setRequestHeaders(req *http.Request) {
 }
 
 func (c *client) signRequest(req *http.Request) error {
-	return c.options.Signer.SignHttp(req, time.Now())
+	return c.options.HttpSigner.SignHttp(req, time.Now())
 }

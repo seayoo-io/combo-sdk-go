@@ -1,9 +1,7 @@
-package server
+package combo
 
 import (
 	"context"
-
-	"github.com/seayoo-io/combo-sdk-go/combo"
 )
 
 type LeaveGameInput struct {
@@ -16,7 +14,7 @@ type LeaveGameInput struct {
 }
 
 type LeaveGameOutput struct {
-	combo.BaseResponse
+	baseResponse
 
 	// 暂时没有返回值。
 }

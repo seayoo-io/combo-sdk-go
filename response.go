@@ -12,13 +12,11 @@ const (
 	traceIdHeader = "x-trace-id"
 )
 
-type ComboResponse interface {
-	ReadHttp(resp *http.Response) error
-	StatusCode() int
-	TraceId() string
+type httpResponseReader interface {
+	ReadResponse(resp *http.Response) error
 }
 
-type BaseResponse struct {
+type baseResponse struct {
 	// HTTP Status Code, e.g. 200, 400, 500...
 	statusCode int
 
@@ -26,22 +24,22 @@ type BaseResponse struct {
 	traceId string
 }
 
-func (b *BaseResponse) ReadHttp(resp *http.Response) error {
+func (b *baseResponse) ReadResponse(resp *http.Response) error {
 	b.statusCode = resp.StatusCode
 	b.traceId = resp.Header.Get(traceIdHeader)
 	return nil
 }
 
-func (b *BaseResponse) StatusCode() int {
+func (b *baseResponse) StatusCode() int {
 	return b.statusCode
 }
 
-func (b *BaseResponse) TraceId() string {
+func (b *baseResponse) TraceId() string {
 	return b.traceId
 }
 
 type ErrorResponse struct {
-	BaseResponse
+	baseResponse
 
 	ErrorCode    string `json:"error"`
 	ErrorMessage string `json:"message"`
@@ -52,8 +50,8 @@ func (e *ErrorResponse) Error() string {
 		e.StatusCode(), e.TraceId(), e.ErrorCode, e.ErrorMessage)
 }
 
-func (b *ErrorResponse) ReadHttp(resp *http.Response) error {
-	b.BaseResponse.ReadHttp(resp)
+func (b *ErrorResponse) ReadResponse(resp *http.Response) error {
+	b.baseResponse.ReadResponse(resp)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("error reading response body: %w", err)
