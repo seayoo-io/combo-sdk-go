@@ -61,7 +61,9 @@ func (c *client) callApi(ctx context.Context, api string, params any, result htt
 		return errorResponse
 	}
 
-	result.ReadResponse(resp)
+	if err := result.ReadResponse(resp); err != nil {
+		return fmt.Errorf("error reading response: %w", err)
+	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("error reading response body: %w", err)

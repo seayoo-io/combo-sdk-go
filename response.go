@@ -51,7 +51,9 @@ func (e *ErrorResponse) Error() string {
 }
 
 func (b *ErrorResponse) ReadResponse(resp *http.Response) error {
-	b.baseResponse.ReadResponse(resp)
+	if err := b.baseResponse.ReadResponse(resp); err != nil {
+		return err
+	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("error reading response body: %w", err)
