@@ -39,13 +39,43 @@ func (r *baseResponse) TraceId() string {
 	return r.traceId
 }
 
+// API 调用失败后（即非 HTTP 200），HTTP response body 中返回的统一数据结构。
+//
+// 游戏侧可使用 errors.As 来获取错误详细信息，示例如下：
+//
+//	import "log"
+//	import "github.com/seayoo-io/combo-sdk-go"
+//
+//	// ...
+//
+//	if err != nil {
+//	    var er *combo.ErrorResponse
+//	    if errors.As(err, &er) {
+//	        log.Printf(`failed to call API: error=%s, message="%s"\n`, er.ErrorCode, er.ErrorMessage)
+//	    }
+//	    return
+//	}
 type ErrorResponse struct {
 	baseResponse
 
-	ErrorCode    string `json:"error"`
+	// 业务错误码，示例 invalid_request, internal_error。
+	ErrorCode string `json:"error"`
+
+	// 错误的描述信息。
 	ErrorMessage string `json:"message"`
 }
 
+// ErrorResponse 实现了 error 接口。
+//
+// 如果游戏侧需要将错误信息记录到日志中，可以直接将 ErrorResponse 作为 error 类型输出。实例如下：
+//
+//	import "log"
+//
+//	// ...
+//
+//	if err != nil {
+//	    log.Printf("failed to call API: %v\n", err)
+//	}
 func (r *ErrorResponse) Error() string {
 	return fmt.Sprintf(`status=%d, trace_id=%s, error=%s, message="%s"`,
 		r.StatusCode(), r.TraceId(), r.ErrorCode, r.ErrorMessage)
