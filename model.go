@@ -6,12 +6,28 @@ import (
 	"fmt"
 )
 
+// Combo API 端点。
+type Endpoint string
+
+// 由世游为游戏分配，用于标识游戏的业务代号。
+type GameId string
+
+// 由世游侧为游戏分配，游戏侧和世游侧共享的密钥。
+// 此密钥用于签名计算与验证。
+type SecretKey []byte
+
+// 游戏客户端运行平台。
+type Platform string
+
+// Identity Provider (IdP) 是世游定义的用户身份提供方，俗称账号系统。
+type IdP string
+
 const (
 	// 中国大陆 API 端点，用于国内发行
-	EndpointChina Endpoint = "https://api.seayoo.com"
+	Endpoint_China Endpoint = "https://api.seayoo.com"
 
 	// 全球的 API 端点，用于海外发行
-	EndpointGlobal Endpoint = "https://api.seayoo.io"
+	Endpoint_Global Endpoint = "https://api.seayoo.io"
 )
 
 const (
@@ -31,33 +47,31 @@ const (
 	Platform_Weixin Platform = "weixin"
 )
 
-// 游戏客户端运行平台
-type Platform string
+const (
+	// 设备登录（游客）
+	IdP_Device IdP = "device"
 
-// Combo API 端点
-type Endpoint string
+	// 世游通行证
+	IdP_Seayoo IdP = "seayoo"
 
-// 由世游为游戏分配，用于标识游戏的业务代号。
-type GameId string
+	// Sign-in with Apple
+	IdP_Apple IdP = "apple"
 
-// 由世游侧为游戏分配，游戏侧和世游侧共享的密钥。
-// 此密钥用于签名计算与验证。
-type SecretKey []byte
+	// Google Account
+	IdP_Google IdP = "google"
 
-func (e Endpoint) String() string {
-	return string(e)
-}
+	// Facebook Login
+	IdP_Facebook IdP = "facebook"
+
+	// 小米账号
+	IdP_Xiaomi IdP = "xiaomi"
+
+	// 微信登录
+	IdP_Weixin IdP = "weixin"
+)
 
 func (e Endpoint) url(api string) string {
 	return fmt.Sprintf("%s/v3/server/%s", e, api)
-}
-
-func (gid GameId) String() string {
-	return string(gid)
-}
-
-func (sk SecretKey) String() string {
-	return string(sk)
 }
 
 func (sk SecretKey) hmacSha256(data []byte) []byte {

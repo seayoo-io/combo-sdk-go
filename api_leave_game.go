@@ -19,7 +19,10 @@ type LeaveGameOutput struct {
 	// 暂时没有返回值。
 }
 
-func (c *client) LeaveGame(ctx context.Context, input *LeaveGameInput) (*LeaveGameOutput, error) {
+// 通知世游服务端玩家离开游戏世界（下线）。
+//
+// 此接口仅用于中宣部防沉迷系统的上下线数据上报。
+func (c *Client) LeaveGame(ctx context.Context, input *LeaveGameInput) (*LeaveGameOutput, error) {
 	output := &LeaveGameOutput{}
 	err := c.callApi(ctx, "leave-game", input, output)
 	if err != nil {

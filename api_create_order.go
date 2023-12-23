@@ -30,25 +30,25 @@ type CreateOrderInput struct {
 	Meta OrderMeta `json:"meta,omitempty"`
 }
 
+// OrderMeta 包含了订单的元数据。
+//
+// 大部分元数据用于数据分析与查询，游戏侧应当尽量提供。
+//
+// 某些元数据在特定的支付场景下是必须的，例如微信小游戏的 iOS 支付场景。
 type OrderMeta struct {
 	// 游戏大区 ID。
-	// 用于数据分析与查询。
 	ZoneId string `json:"zone_id,omitempty"`
 
 	// 游戏服务器 ID。
-	// 用于数据分析与查询。
 	ServerId string `json:"server_id,omitempty"`
 
 	// 游戏角色 ID。
-	// 用于数据分析与查询。
 	RoleId string `json:"role_id,omitempty"`
 
 	// 游戏角色名。
-	// 用于数据分析与查询。
 	RoleName string `json:"role_name,omitempty"`
 
 	// 游戏角色的等级。
-	// 用于数据分析与查询。
 	RoleLevel int `json:"role_level,omitempty"`
 
 	// 微信小游戏的 App ID。
@@ -73,7 +73,8 @@ type CreateOrderOutput struct {
 	ExpiresAt int64 `json:"expires_at"`
 }
 
-func (c *client) CreateOrder(ctx context.Context, input *CreateOrderInput) (*CreateOrderOutput, error) {
+// 创建订单，发起一个应用内购买 + 支付的流程。
+func (c *Client) CreateOrder(ctx context.Context, input *CreateOrderInput) (*CreateOrderOutput, error) {
 	if input.Quantity <= 0 {
 		input.Quantity = 1
 	}

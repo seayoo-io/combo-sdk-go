@@ -12,30 +12,31 @@ const (
 	traceIdHeader = "x-trace-id"
 )
 
-type httpResponseReader interface {
+type responseReader interface {
 	readResponse(resp *http.Response) error
 }
 
 type baseResponse struct {
-	// HTTP Status Code, e.g. 200, 400, 500...
 	statusCode int
-
-	// Unique ID for this request, used for debugging and tracing.
-	traceId string
+	traceId    string
 }
 
-func (b *baseResponse) readResponse(resp *http.Response) error {
-	b.statusCode = resp.StatusCode
-	b.traceId = resp.Header.Get(traceIdHeader)
+func (r *baseResponse) readResponse(resp *http.Response) error {
+	r.statusCode = resp.StatusCode
+	r.traceId = resp.Header.Get(traceIdHeader)
 	return nil
 }
 
-func (b *baseResponse) StatusCode() int {
-	return b.statusCode
+// HTTP 状态码，例如 200, 400, 500...
+func (r *baseResponse) StatusCode() int {
+	return r.statusCode
 }
 
-func (b *baseResponse) TraceId() string {
-	return b.traceId
+// 世游服务端生成的，用于追踪本次请求的唯一 ID。
+//
+// 建议游戏侧将 TraceId 记录到日志中，以便于调试和问题排查。
+func (r *baseResponse) TraceId() string {
+	return r.traceId
 }
 
 type ErrorResponse struct {
@@ -45,13 +46,13 @@ type ErrorResponse struct {
 	ErrorMessage string `json:"message"`
 }
 
-func (e *ErrorResponse) Error() string {
+func (r *ErrorResponse) Error() string {
 	return fmt.Sprintf(`status=%d, trace_id=%s, error=%s, message="%s"`,
-		e.StatusCode(), e.TraceId(), e.ErrorCode, e.ErrorMessage)
+		r.StatusCode(), r.TraceId(), r.ErrorCode, r.ErrorMessage)
 }
 
-func (b *ErrorResponse) readResponse(resp *http.Response) error {
-	if err := b.baseResponse.readResponse(resp); err != nil {
+func (r *ErrorResponse) readResponse(resp *http.Response) error {
+	if err := r.baseResponse.readResponse(resp); err != nil {
 		return err
 	}
 	body, err := io.ReadAll(resp.Body)
@@ -62,7 +63,7 @@ func (b *ErrorResponse) readResponse(resp *http.Response) error {
 	if !strings.HasPrefix(contentType, "application/json") {
 		return fmt.Errorf(`unexpected response: status=%d, body="%s"`, resp.StatusCode, string(body))
 	}
-	if err := json.Unmarshal(body, b); err != nil {
+	if err := json.Unmarshal(body, r); err != nil {
 		return fmt.Errorf("failed to unmarshal error response: %w", err)
 	}
 	return nil

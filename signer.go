@@ -27,25 +27,9 @@ const (
 )
 
 // HttpSigner is the interface for signing and verifying http requests
-type HttpSigner interface {
-	// SignHttp computes the signature of given http request and set the Authorization header
-	SignHttp(r *http.Request, signingTime time.Time) error
-
-	// AuthHttp reads the Authorization header from given http request and verifies the signature
-	AuthHttp(r *http.Request, currentTime time.Time) error
-}
-
-// NewHttpSigner creates a new HTTPSigner
-func NewHttpSigner(gameId GameId, secretKey SecretKey) (HttpSigner, error) {
-	return &signer{
-		gameId:    gameId,
-		secretKey: secretKey,
-	}, nil
-}
-
-type signer struct {
-	gameId    GameId
-	secretKey SecretKey
+type httpSigner struct {
+	game       GameId
+	signingKey SecretKey
 }
 
 type authorization struct {
@@ -55,7 +39,8 @@ type authorization struct {
 	signature string
 }
 
-func (s *signer) SignHttp(r *http.Request, signingTime time.Time) error {
+// SignHttp computes the signature of given http request and set the Authorization header
+func (s *httpSigner) SignHttp(r *http.Request, signingTime time.Time) error {
 	timestamp := getTimestamp(signingTime)
 	stringToSign, err := buildStringToSign(r, timestamp)
 	if err != nil {
@@ -66,7 +51,8 @@ func (s *signer) SignHttp(r *http.Request, signingTime time.Time) error {
 	return nil
 }
 
-func (s *signer) AuthHttp(r *http.Request, currentTime time.Time) error {
+// AuthHttp reads the Authorization header from given http request and verifies the signature
+func (s *httpSigner) AuthHttp(r *http.Request, currentTime time.Time) error {
 	// Step 1, parse authorization header
 	auth, err := parseAuthorizationHeader(r.Header.Get(authorizationHeader))
 	if err != nil {
@@ -82,7 +68,7 @@ func (s *signer) AuthHttp(r *http.Request, currentTime time.Time) error {
 		return fmt.Errorf("time difference exceeds maximum allowed: %s", timeDiff)
 	}
 	// Step 4, verify game
-	if auth.game != s.gameId {
+	if auth.game != s.game {
 		return fmt.Errorf("invalid game: %s", auth.game)
 	}
 	// Step 5, verify signature
@@ -98,17 +84,17 @@ func (s *signer) AuthHttp(r *http.Request, currentTime time.Time) error {
 	return nil
 }
 
-func (s *signer) computeSignature(stringToSign string) string {
-	sig := s.secretKey.hmacSha256([]byte(stringToSign))
+func (s *httpSigner) computeSignature(stringToSign string) string {
+	sig := s.signingKey.hmacSha256([]byte(stringToSign))
 	return hex.EncodeToString(sig)
 }
 
-func (s *signer) buildAuthorizationHeader(timestamp, signature string) string {
+func (s *httpSigner) buildAuthorizationHeader(timestamp, signature string) string {
 	// TODO: include space between parameters
 	// return fmt.Sprintf("%s Game=%s, Timestamp=%s, Signature=%s",
 	return fmt.Sprintf("%s Game=%s,Timestamp=%s,Signature=%s",
 		signingAlgorithm,
-		s.gameId,
+		s.game,
 		timestamp,
 		signature,
 	)
