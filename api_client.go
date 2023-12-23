@@ -10,7 +10,15 @@ import (
 	"time"
 )
 
-// Client 是一个用来调用 Combo Server API 的 API Client
+// Client 是一个用来调用 Combo Server API 的 API Client。
+//
+// Client 的方法对应了 Combo Server API 的各个接口，每个方法均会返回两个值，
+// 第一个值是 API 调用的结果，第二个值是 error。
+// 如果 API 调用成功，则 error 为 nil。
+// 如果 API 调用失败，则 error 为对应的错误信息。
+//
+// API 明确返回的错误，例如参数错误、签名错误、内部错误等等，error 的类型是 *ErrorResponse，
+// 可以用 errors.As 将 error 转换为 *ErrorResponse 类型，从而进一步获取详细的错误信息。
 type Client struct {
 	endpoint  Endpoint
 	client    HttpClient
@@ -37,7 +45,7 @@ func WithHttpClient(client HttpClient) ClientOption {
 	}
 }
 
-// NewClient 创建一个新的 Server API 的 client
+// NewClient 创建一个新的 Server API 的 client。
 func NewClient(cfg Config, options ...ClientOption) (*Client, error) {
 	if err := cfg.validate(); err != nil {
 		return nil, err

@@ -2,7 +2,6 @@ package combo
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -35,15 +34,12 @@ func NewTokenVerifier(cfg Config) (*TokenVerifier, error) {
 
 // IdentityPayload 包含了用户的身份信息。
 type IdentityPayload struct {
-	// ExpiresAt 是 IdentityToken 的过期时间。
-	ExpiresAt time.Time
-
 	// ComboId 是世游分配的聚合用户 ID。
 	// 游戏侧应当使用 ComboId 作为用户的唯一标识。
 	ComboId string
 
 	// IdP (Identity Provider) 是用户身份的提供者。
-	// 游戏侧可以使用 IdP 做业务辅助判断。
+	// 游戏侧可以使用 IdP 做业务辅助判断，例如判定用户是否使用了某个特定的登录方式。
 	IdP IdP
 
 	// ExternalId 是用户在外部 IdP 中的唯一标识。
@@ -54,7 +50,7 @@ type IdentityPayload struct {
 	// - 如果用户使用微信登录，那么 ExternalId 就是用户在微信中的 OpenId。
 	//
 	// 注意：
-	// 游戏侧不应当使用 ExternalId 作为用户标识，但可以使用 ExternalId 做业务辅助判断。
+	// 游戏侧不应当使用 ExternalId 作为用户标识，但可以将 ExternalId 用于特定的业务逻辑。
 	ExternalId string
 
 	// ExternalName 是用户在外部 IdP 中的名称，通常是用户的昵称。
@@ -69,7 +65,6 @@ type IdentityPayload struct {
 
 type identityClaims struct {
 	jwt.RegisteredClaims
-
 	Scope         string `json:"scope"`
 	IdP           string `json:"idp"`
 	ExternalId    string `json:"external_id"`
@@ -93,9 +88,6 @@ func (v *TokenVerifier) VerifyIdentityToken(tokenString string) (*IdentityPayloa
 		return nil, fmt.Errorf("invalid scope: %s", claims.Scope)
 	}
 	return &IdentityPayload{
-		// claims.ExpiresAt should never be nil
-		// because of jwt.WithExpirationRequired() when creating the parser
-		ExpiresAt:     claims.ExpiresAt.Time,
 		ComboId:       claims.Subject,
 		IdP:           IdP(claims.IdP),
 		ExternalId:    claims.ExternalId,

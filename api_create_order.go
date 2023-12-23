@@ -17,7 +17,10 @@ type CreateOrderInput struct {
 	// 客户端的运行平台。
 	Platform Platform `json:"platform"`
 
-	// 游戏侧异步接收发货通知的地址。
+	// 游戏侧接收发货通知的服务端地址。
+	// 这个地址对应的服务端应当实现 NotificationListener 接口。
+	// 发货通知会调用 NotificationListener.HandleShipOrder() 方法。
+	// 发货通知的数据格式请参考 ShipOrderNotification。
 	NotifyUrl string `json:"notify_url"`
 
 	// 要购买的商品的数量。

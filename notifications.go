@@ -42,9 +42,16 @@ type NotificationId string
 //
 // 游戏侧需要实现此接口并执行对应的业务逻辑。
 type NotificationListener interface {
+
+	// HandleShipOrder 用于处理订单发货通知。
+	// 世游服务端会在订单状态变更为已支付时，向游戏侧推送发货通知。
+	// 游戏侧需要在收到通知后，根据通知中的订单信息，发货给用户：
+	// - 如果游戏内发货成功，则应当返回 nil。
+	// - 如果游戏内发货出现错误，则应当返回对应的 error。世游服务端会在稍后重试推送发货通知。
 	HandleShipOrder(ctx context.Context, id NotificationId, payload *ShipOrderNotification) error
 }
 
+// ShipOrderNotification 是订单发货通知的数据结构，包含了订单的详细信息。
 type ShipOrderNotification struct {
 	// 世游服务端创建的,标识订单的唯一 ID。
 	OrderId string `json:"order_id"`
@@ -92,7 +99,7 @@ type notificationHandler struct {
 
 func (h *notificationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "please use HTTP POST", http.StatusMethodNotAllowed)
+		http.Error(w, "please use POST", http.StatusMethodNotAllowed)
 		return
 	}
 	contentType := r.Header.Get("Content-Type")
@@ -124,7 +131,7 @@ func (h *notificationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, fmt.Sprintf("unknown notification type: %s", body.Type), http.StatusBadRequest)
 		return
 	}
-	// Notification has been handled successfully, return 200 OK
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
+	// Notification has been handled successfully, return 200 OK.
+	// The return values are ignored to make linters happy.
+	_, _ = w.Write([]byte("OK"))
 }

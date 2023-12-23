@@ -39,15 +39,14 @@ func (r *baseResponse) TraceId() string {
 	return r.traceId
 }
 
-// API 调用失败后（即非 HTTP 200），HTTP response body 中返回的统一数据结构。
+// ErrorResponse 对应 Combo Server API 返回的的错误响应。
 //
 // 游戏侧可使用 errors.As 来获取错误详细信息，示例如下：
 //
 //	import "log"
 //	import "github.com/seayoo-io/combo-sdk-go"
 //
-//	// ...
-//
+//	// an API call to Client.CreateOrder() returns nil, err
 //	if err != nil {
 //	    var er *combo.ErrorResponse
 //	    if errors.As(err, &er) {
