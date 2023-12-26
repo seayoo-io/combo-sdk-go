@@ -66,6 +66,10 @@ type IdentityPayload struct {
 
 // AdPayload 包含了激励广告的播放信息。
 type AdPayload struct {
+	// ComboId 是世游分配的聚合用户 ID。
+	// 游戏侧应当使用 ComboId 作为用户的唯一标识。
+	ComboId string
+
 	// PlacementId 是广告位 ID，游戏侧用它确定发放什么样的广告激励。
 	PlacementId string
 
@@ -123,6 +127,7 @@ func (v *TokenVerifier) VerifyAdToken(tokenString string) (*AdPayload, error) {
 		return nil, fmt.Errorf("invalid scope: %s", claims.Scope)
 	}
 	return &AdPayload{
+		ComboId:      claims.Subject,
 		PlacementId:  claims.PlacementId,
 		ImpressionId: claims.ImpressionId,
 	}, nil
