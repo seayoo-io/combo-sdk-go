@@ -8,6 +8,7 @@ import (
 
 const (
 	identityTokenScope = "auth"
+	adTokenScope       = "ads"
 )
 
 // TokenVerifier 用于验证世游服务端颁发的 Token。
@@ -63,6 +64,15 @@ type IdentityPayload struct {
 	WeixinUnionid string
 }
 
+// AdPayload 包含了激励广告的播放信息。
+type AdPayload struct {
+	// PlacementId 是广告位 ID，游戏侧用它确定发放什么样的广告激励。
+	PlacementId string
+
+	// ImpressionId 是世游服务端创建的，标识单次广告播放的唯一 ID。
+	ImpressionId string
+}
+
 type identityClaims struct {
 	jwt.RegisteredClaims
 	Scope         string `json:"scope"`
@@ -72,16 +82,20 @@ type identityClaims struct {
 	WeixinUnionid string `json:"weixin_unionid"`
 }
 
+type adClaims struct {
+	jwt.RegisteredClaims
+	Scope        string `json:"scope"`
+	PlacementId  string `json:"placement_id"`
+	ImpressionId string `json:"impression_id"`
+}
+
 // VerifyIdentityToken 对 IdentityToken 进行验证。
 //
 // 如果验证通过，返回 IdentityPayload。如果验证不通过，返回 error。
 func (v *TokenVerifier) VerifyIdentityToken(tokenString string) (*IdentityPayload, error) {
-	token, err := v.parser.ParseWithClaims(tokenString, &identityClaims{}, v.keyFunc)
+	token, err := v.parseToken(tokenString, &identityClaims{})
 	if err != nil {
-		return nil, fmt.Errorf("error parsing token: %w", err)
-	}
-	if !token.Valid {
-		return nil, fmt.Errorf("invalid token")
+		return nil, err
 	}
 	claims := token.Claims.(*identityClaims)
 	if claims.Scope != identityTokenScope {
@@ -94,6 +108,35 @@ func (v *TokenVerifier) VerifyIdentityToken(tokenString string) (*IdentityPayloa
 		ExternalName:  claims.ExternalName,
 		WeixinUnionid: claims.WeixinUnionid,
 	}, nil
+}
+
+// VerifyAdToken 对 AdToken 进行验证。
+//
+// 如果验证通过，返回 AdPayload。如果验证不通过，返回 error。
+func (v *TokenVerifier) VerifyAdToken(tokenString string) (*AdPayload, error) {
+	token, err := v.parseToken(tokenString, &adClaims{})
+	if err != nil {
+		return nil, err
+	}
+	claims := token.Claims.(*adClaims)
+	if claims.Scope != adTokenScope {
+		return nil, fmt.Errorf("invalid scope: %s", claims.Scope)
+	}
+	return &AdPayload{
+		PlacementId:  claims.PlacementId,
+		ImpressionId: claims.ImpressionId,
+	}, nil
+}
+
+func (v *TokenVerifier) parseToken(tokenString string, claims jwt.Claims) (*jwt.Token, error) {
+	token, err := v.parser.ParseWithClaims(tokenString, claims, v.keyFunc)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing token: %w", err)
+	}
+	if !token.Valid {
+		return nil, fmt.Errorf("invalid token")
+	}
+	return token, nil
 }
 
 func (v *TokenVerifier) keyFunc(token *jwt.Token) (interface{}, error) {
