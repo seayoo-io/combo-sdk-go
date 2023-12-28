@@ -71,7 +71,7 @@ const (
 )
 
 func (e Endpoint) url(api string) string {
-	return fmt.Sprintf("%s/v3/server/%s", e, api)
+	return fmt.Sprintf("%s/v1/server/%s", e, api)
 }
 
 func (sk SecretKey) hmacSha256(data []byte) []byte {
