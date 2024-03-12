@@ -68,6 +68,33 @@ const (
 
 	// 微信登录
 	IdP_Weixin IdP = "weixin"
+
+	// OPPO 账号
+	IdP_Oppo IdP = "oppo"
+
+	// VIVO 账号
+	IdP_Vivo IdP = "vivo"
+
+	// 华为账号
+	IdP_Huawei IdP = "huawei"
+
+	// 荣耀账号
+	IdP_Honor IdP = "honor"
+
+	// UC（九游）登录
+	IdP_UC IdP = "uc"
+
+	// TapTap 登录
+	IdP_TapTap IdP = "taptap"
+
+	// 哔哩哔哩（B站）账号
+	IdP_Bilibili IdP = "bilibili"
+
+	// 应用宝 YSDK 登录
+	IdP_Yingyongbao IdP = "yingyongbao"
+
+	// 4399 账号登录
+	IdP_4399 IdP = "4399"
 )
 
 func (e Endpoint) url(api string) string {
