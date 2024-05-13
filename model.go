@@ -54,7 +54,7 @@ const (
 	// 世游通行证
 	IdP_Seayoo IdP = "seayoo"
 
-	// Sign-in with Apple
+	// Sign in with Apple
 	IdP_Apple IdP = "apple"
 
 	// Google Account
@@ -95,6 +95,12 @@ const (
 
 	// 4399 账号登录
 	IdP_4399 IdP = "4399"
+
+	// 抖音账号
+	IdP_Douyin IdP = "douyin"
+
+	// 雷电模拟器账号
+	IdP_Leidian IdP = "leidian"
 )
 
 func (e Endpoint) url(api string) string {
