@@ -36,7 +36,7 @@ func NewTokenVerifier(cfg Config) (*TokenVerifier, error) {
 // IdentityPayload 包含了用户的身份信息。
 type IdentityPayload struct {
 	// ComboId 是世游分配的聚合用户 ID。
-	// 游戏侧应当使用 ComboId 作为用户的唯一标识。
+	// 游戏侧应当使用 ComboId 作为用户的唯一标识，即游戏帐号。
 	ComboId string
 
 	// IdP (Identity Provider) 是用户身份的提供者。
@@ -62,6 +62,16 @@ type IdentityPayload struct {
 	//
 	// 注意：WeixinUnionid 只在 IdP 为 weixin 时才会有值。
 	WeixinUnionid string
+
+	// Distro 是游戏客户端的发行版本标识。
+	// 游戏侧可将 Distro 用于服务端数据埋点，以及特定的业务逻辑判断。
+	Distro string
+
+	// Variant 是游戏客户端的分包标识。
+	// 游戏侧可将 Variant 用于服务端数据埋点，以及特定的业务逻辑判断。
+	//
+	// 注意：Variant 只在客户端是分包时才会有值。当客户端不是分包的情况下，Variant 为空字符串。
+	Variant string
 }
 
 // AdPayload 包含了激励广告的播放信息。
@@ -84,6 +94,8 @@ type identityClaims struct {
 	ExternalId    string `json:"external_id"`
 	ExternalName  string `json:"external_name"`
 	WeixinUnionid string `json:"weixin_unionid"`
+	Distro        string `json:"distro"`
+	Variant       string `json:"variant"`
 }
 
 type adClaims struct {
@@ -111,6 +123,8 @@ func (v *TokenVerifier) VerifyIdentityToken(tokenString string) (*IdentityPayloa
 		ExternalId:    claims.ExternalId,
 		ExternalName:  claims.ExternalName,
 		WeixinUnionid: claims.WeixinUnionid,
+		Distro:        claims.Distro,
+		Variant:       claims.Variant,
 	}, nil
 }
 
