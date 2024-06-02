@@ -66,10 +66,10 @@ type GmError string
 // 客户端错误。
 // 这些错误通常是由于世游侧发送的请求不正确导致的。
 const (
-	// 请求的 HTTP 方法不正确。例如，期望收到 POST 请求，但实际收到了 GET 请求。
+	// 请求中的 HTTP method 不正确，没有按照预期使用 POST。
 	GmError_InvalidHttpMethod GmError = "invalid_http_method"
 
-	// 请求的 Content-Type 不正确。例如，期望收到 application/json，但实际收到了 text/plain。
+	// 请求中的 Content-Type 不是 application/json。
 	GmError_InvalidContentType GmError = "invalid_content_type"
 
 	// 对 HTTP 请求的签名验证不通过。这意味着 HTTP 请求不可信。
@@ -81,26 +81,29 @@ const (
 	// 游戏侧不认识请求中的 GM 命令。
 	GmError_InvalidCommand GmError = "invalid_command"
 
-	// GM 命令的参数不正确。例如，缺少必要的字段，或字段类型不正确。
+	// GM 命令的参数不正确。例如，参数缺少必要的字段，或参数的字段类型不正确。
 	GmError_InvalidArgs GmError = "invalid_args"
+
+	// GM 命令发送频率过高，被游戏侧限流，命令未被处理。
+	GmError_ThrottlingError GmError = "throttling_error"
 )
 
 // 服务端错误。
 // 这些错误通常是游戏侧处理 GM 命令时出现问题导致的。
 const (
-	// 网络通信错误。
+	// 游戏当前处于停服维护状态，无法处理收到的 GM 命令。
+	GmError_MaintenanceError GmError = "maintenance_error"
+
+	// 网络通信错误导致 GM 命令执行失败。
 	GmError_NetworkError GmError = "network_error"
 
-	// 数据库操作异常。
+	// 数据库操作异常导致 GM 命令执行失败。
 	GmError_DatabaseError GmError = "database_error"
 
 	// GM 命令处理超时。
 	GmError_TimeoutError GmError = "timeout_error"
 
-	// GM 命令发送频率过高，被游戏侧限流，命令未被处理。
-	GmError_ThrottleError GmError = "throttle_error"
-
-	// 处理 GM 命令时内部出错。可作为通用错误类型。
+	// 处理 GM 命令时内部出错。可作为兜底的通用错误类型。
 	GmError_InternalError GmError = "internal_error"
 )
 
@@ -113,10 +116,11 @@ var gmError2HttpStatus = map[GmError]int{
 	GmError_InvalidRequest:     http.StatusBadRequest,
 	GmError_InvalidCommand:     http.StatusBadRequest,
 	GmError_InvalidArgs:        http.StatusBadRequest,
+	GmError_ThrottlingError:    http.StatusTooManyRequests,
+	GmError_MaintenanceError:   http.StatusServiceUnavailable,
 	GmError_NetworkError:       http.StatusInternalServerError,
 	GmError_DatabaseError:      http.StatusInternalServerError,
 	GmError_TimeoutError:       http.StatusInternalServerError,
-	GmError_ThrottleError:      http.StatusTooManyRequests,
 	GmError_InternalError:      http.StatusInternalServerError,
 }
 

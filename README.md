@@ -183,3 +183,144 @@ func (l *NotificationListener) HandleShipOrder(ctx context.Context, id combo.Not
     return nil
 }
 ```
+
+## 处理 GM 命令
+
+假定 GM 接入协议文件如下：
+
+```protobuf
+syntax = "proto3";
+package demo;
+
+import "gm.proto";
+
+service Demo {
+  rpc ListRoles(ListRolesRequest) returns (ListRolesResponse) {
+    option (combo.cmd_name) = "获取角色列表";
+    option (combo.cmd_desc) = "获取 Combo ID 在指定区服下的游戏角色列表";
+  }
+}
+
+enum RoleStatus {
+  option (combo.enum_name) = "角色状态";
+
+  UNKNOWN = 0 [(combo.value_name) = "未知"];
+  ONLINE = 1  [(combo.value_name) = "在线"];
+  OFFLINE = 2 [(combo.value_name) = "离线"];
+}
+
+message Role {
+  string role_id = 1    [(combo.field_name) = "角色 ID"];
+  string role_name = 2  [(combo.field_name) = "角色名称"];
+  int32 level = 3       [(combo.field_name) = "角色等级"];
+  RoleStatus status = 4 [(combo.field_name) = "角色状态"];
+}
+
+message ListRolesRequest {
+  string combo_id = 1 [(combo.field_name) = "Combo ID", (combo.required) = true];
+  int32 server_id = 2 [(combo.field_name) = "区服 ID", (combo.field_desc) = "游戏服务器的唯一 ID", (combo.required) = true];
+}
+
+message ListRolesResponse {
+  repeated Role roles = 1 [(combo.field_name) = "角色列表"];
+}
+```
+
+处理上述 GM 协议的示例代码：
+
+```go
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+
+	"github.com/seayoo-io/combo-sdk-go"
+)
+
+func main() {
+	cfg := combo.Config{
+		Endpoint:  combo.Endpoint_China, // or combo.Endpoint_Global
+		GameId:    combo.GameId("<GAME_ID>"),
+		SecretKey: combo.SecretKey("sk_<SECRET_KEY>"),
+	}
+
+	handler, err := combo.NewGmHandler(cfg, &GmListener{})
+	if err != nil {
+		panic(err)
+	}
+	http.Handle("/gm", handler)
+	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+type GmListener struct{}
+
+func (l *GmListener) HandleGmRequest(ctx context.Context, req *combo.GmRequest) (resp any, err *combo.GmErrorResponse) {
+	fmt.Printf("HandleGmRequest: Version=%s, Id=%s\n", req.Version, req.Id)
+	fmt.Printf("Cmd: %s\n", req.Cmd)
+	fmt.Printf("Args: %s\n", string(req.Args))
+	switch req.Cmd {
+	case "ListRoles":
+		var r ListRolesRequest
+		if err := json.Unmarshal(req.Args, &r); err != nil {
+			return nil, &combo.GmErrorResponse{
+				Error:   combo.GmError_InvalidArgs,
+				Message: err.Error(),
+			}
+		}
+		return ListRoles(ctx, &r)
+	default:
+		return nil, &combo.GmErrorResponse{
+			Error:   combo.GmError_InvalidCommand,
+			Message: "Unknown command: " + req.Cmd,
+		}
+	}
+}
+
+type RoleStatus int32
+
+const (
+	RoleStatus_Online  RoleStatus = 1
+	RoleStatus_Offline RoleStatus = 2
+)
+
+type Role struct {
+	RoleId   string     `json:"role_id"`
+	RoleName string     `json:"role_name"`
+	Level    int32      `json:"level"`
+	Status   RoleStatus `json:"status"`
+}
+
+type ListRolesRequest struct {
+	ComboId  string `json:"combo_id"`
+	ServerId int32  `json:"server_id"`
+}
+
+type ListRolesResponse struct {
+	Roles []*Role `json:"roles"`
+}
+
+func ListRoles(ctx context.Context, req *ListRolesRequest) (resp *ListRolesResponse, err *combo.GmErrorResponse) {
+	fmt.Printf("[ListRoles] ComboId: %s\n", req.ComboId)
+	fmt.Printf("[ListRoles] ServerId: %d\n", req.ServerId)
+	return &ListRolesResponse{
+		Roles: []*Role{
+			{
+				RoleId:   "845284226758233306",
+				RoleName: "洪文泽",
+				Level:    37,
+				Status:   RoleStatus_Online,
+			},
+			{
+				RoleId:   "844716741320391248",
+				RoleName: "擎天-豆腐",
+				Level:    5,
+				Status:   RoleStatus_Offline,
+			},
+		},
+	}, nil
+}
+```
