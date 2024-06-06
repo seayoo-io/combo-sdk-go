@@ -10,7 +10,9 @@ import (
 )
 
 // NewGmHandler 创建一个用于处理世游服务端发送的 GM 命令的 http.Handler。
+//
 // 游戏侧需要将此 Handler 注册到游戏的 HTTP 服务中。
+//
 // 注意：注册 Handler 时，应当使用 HTTP POST。
 func NewGmHandler(cfg Config, listener GmListener) (http.Handler, error) {
 	if err := cfg.validate(); err != nil {
@@ -32,8 +34,10 @@ func NewGmHandler(cfg Config, listener GmListener) (http.Handler, error) {
 // 游戏侧需要实现此接口并根据 GM 命令执行对应的业务逻辑。
 type GmListener interface {
 	// HandleGmRequest 负责执行 GM 命令。
-	// resp 是 GM 命令执行成功时的返回值。
-	// resp 会被 Combo SDK 序列化成一个 JSON Object，其结构需要 GM 协议文件中 rpc 的 Response 一致。
+	// resp 是 GM 命令执行成功时的返回值，结构需要 GM 协议文件中 rpc 的 Response 一致。
+	// Combo SDK 会对 resp 做 JSON 序列化操作。
+	// - 如果游戏侧希望自己控制 JSON 序列化的过程，resp 实现 interface json.Marshaler 即可。
+	// - 如果游戏侧希望直接返回 JSON 序列化的结果，确保 resp 的类型是 json.RawMessage 即可。
 	// err 是 GM 命令执行失败时的错误信息。
 	// - 如果 GM 命令执行成功，应当返回 resp, nil。
 	// - 如果 GM 命令执行失败，应当返回 nil, err。
