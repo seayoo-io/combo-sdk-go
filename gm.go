@@ -45,10 +45,12 @@ type GmListener interface {
 }
 
 type GmRequest struct {
-	// Version 是 GM 请求的的版本号。当前版本固定为 1.0。
+	// Version 是 GM 请求的的版本号。当前版本固定为 2.0。
 	Version string
-	// Id 是 GM 请求的唯一 ID。游戏后端可用此值来对通知进行去重处理。
+	// Id 是本次 GM 请求的唯一 ID。游戏后端可用此值来对通知进行去重处理。
 	Id string
+	// IdempotencyKey 是本次 GM 请求的 Idempotency Key。如果有值则应当执行幂等处理逻辑。
+	IdempotencyKey string
 	// Cmd 是 GM 命令标识。取值和 GM 协议文件中的 rpc 名称对应。
 	Cmd string
 	// Args 是和 Cmd 对应的 GM 命令参数。这是一个异构的 JSON Object，结构和 GM 协议文件中 rpc 的 Request 一致。
@@ -62,6 +64,8 @@ type GmErrorResponse struct {
 	Error GmError `json:"error"`
 	// 错误描述信息。预期是给人看的，便于联调和问题排查。
 	Message string `json:"message"`
+	// 如果为 true，表示无法确定 GM 命令是否被执行。默认语义是 GM 命令未被执行（否则应当返回成功响应）。
+	Uncertain bool `json:"uncertain,omitempty"`
 }
 
 // GmError 是 GM 命令处理失败时返回的错误类型。
@@ -90,6 +94,12 @@ const (
 
 	// GM 命令发送频率过高，被游戏侧限流，命令未被处理。
 	GmError_ThrottlingError GmError = "throttling_error"
+
+	// 幂等处理重试请求时，idempotency_key 所对应的原始请求尚未处理完毕。
+	GmError_IdempotencyConflict GmError = "idempotency_conflict"
+
+	// 幂等处理重试请求时，请求内容和 idempotency_key 所对应的原始请求内容不一致。
+	GmError_IdempotencyMismatch GmError = "idempotency_mismatch"
 )
 
 // 服务端错误。
@@ -114,25 +124,28 @@ const (
 var jsonContentType = []string{"application/json"}
 
 var gmError2HttpStatus = map[GmError]int{
-	GmError_InvalidHttpMethod:  http.StatusMethodNotAllowed,
-	GmError_InvalidContentType: http.StatusUnsupportedMediaType,
-	GmError_InvalidSignature:   http.StatusUnauthorized,
-	GmError_InvalidRequest:     http.StatusBadRequest,
-	GmError_InvalidCommand:     http.StatusBadRequest,
-	GmError_InvalidArgs:        http.StatusBadRequest,
-	GmError_ThrottlingError:    http.StatusTooManyRequests,
-	GmError_MaintenanceError:   http.StatusServiceUnavailable,
-	GmError_NetworkError:       http.StatusInternalServerError,
-	GmError_DatabaseError:      http.StatusInternalServerError,
-	GmError_TimeoutError:       http.StatusInternalServerError,
-	GmError_InternalError:      http.StatusInternalServerError,
+	GmError_InvalidHttpMethod:   http.StatusMethodNotAllowed,
+	GmError_InvalidContentType:  http.StatusUnsupportedMediaType,
+	GmError_InvalidSignature:    http.StatusUnauthorized,
+	GmError_InvalidRequest:      http.StatusBadRequest,
+	GmError_InvalidCommand:      http.StatusBadRequest,
+	GmError_InvalidArgs:         http.StatusBadRequest,
+	GmError_ThrottlingError:     http.StatusTooManyRequests,
+	GmError_IdempotencyConflict: http.StatusConflict,
+	GmError_IdempotencyMismatch: http.StatusUnprocessableEntity,
+	GmError_MaintenanceError:    http.StatusServiceUnavailable,
+	GmError_NetworkError:        http.StatusInternalServerError,
+	GmError_DatabaseError:       http.StatusInternalServerError,
+	GmError_TimeoutError:        http.StatusInternalServerError,
+	GmError_InternalError:       http.StatusInternalServerError,
 }
 
 type gmRequestBody struct {
-	Version   string          `json:"version"`
-	RequestId string          `json:"request_id"`
-	Command   string          `json:"command"`
-	Args      json.RawMessage `json:"args"`
+	Version        string          `json:"version"`
+	RequestId      string          `json:"request_id"`
+	IdempotencyKey string          `json:"idempotency_key"`
+	Command        string          `json:"command"`
+	Args           json.RawMessage `json:"args"`
 }
 
 type gmHandler struct {
@@ -176,10 +189,11 @@ func (h *gmHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp, err := h.listener.HandleGmRequest(r.Context(), &GmRequest{
-		Version: body.Version,
-		Id:      body.RequestId,
-		Cmd:     body.Command,
-		Args:    body.Args,
+		Version:        body.Version,
+		Id:             body.RequestId,
+		IdempotencyKey: body.IdempotencyKey,
+		Cmd:            body.Command,
+		Args:           body.Args,
 	})
 	if err != nil {
 		status, ok := gmError2HttpStatus[err.Error]
