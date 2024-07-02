@@ -69,7 +69,7 @@ func (s *httpSigner) AuthHttp(r *http.Request, currentTime time.Time) error {
 	}
 	// Step 4, verify game
 	if auth.game != s.game {
-		return fmt.Errorf("invalid game: %s", auth.game)
+		return fmt.Errorf("invalid game: expect %s, got %s", s.game, auth.game)
 	}
 	// Step 5, verify signature
 	timestamp := getTimestamp(auth.timestamp)
@@ -79,7 +79,7 @@ func (s *httpSigner) AuthHttp(r *http.Request, currentTime time.Time) error {
 	}
 	signature := s.computeSignature(stringToSign)
 	if auth.signature != signature {
-		return fmt.Errorf("invalid signature: expect %s, got %s", signature, auth.signature)
+		return fmt.Errorf("invalid signature: %s", auth.signature)
 	}
 	return nil
 }
