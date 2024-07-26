@@ -72,6 +72,16 @@ type IdentityPayload struct {
 	//
 	// 注意：Variant 只在客户端是分包时才会有值。当客户端不是分包的情况下，Variant 为空字符串。
 	Variant string
+
+	// Age 是根据用户的实名认证信息得到的年龄。0 表示未知。
+	//
+	// 在某些特殊场景下，游戏侧可用 Age 来自行处理防沉迷。
+	//
+	// 注意：Age 不保证返回精确的年龄信息，仅保证用于防沉迷处理时的准确度够用。
+	// 例如：
+	//	当某个用户真实年龄为 35 岁时，Age 可能返回 18
+	//	当某个用户真实年龄为 17 岁时，Age 可能返回 16
+	Age int
 }
 
 // AdPayload 包含了激励广告的播放信息。
@@ -96,6 +106,7 @@ type identityClaims struct {
 	WeixinUnionid string `json:"weixin_unionid"`
 	Distro        string `json:"distro"`
 	Variant       string `json:"variant"`
+	Age           int    `json:"age"`
 }
 
 type adClaims struct {
@@ -125,6 +136,7 @@ func (v *TokenVerifier) VerifyIdentityToken(tokenString string) (*IdentityPayloa
 		WeixinUnionid: claims.WeixinUnionid,
 		Distro:        claims.Distro,
 		Variant:       claims.Variant,
+		Age:           claims.Age,
 	}, nil
 }
 
