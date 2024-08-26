@@ -248,7 +248,17 @@ func main() {
 		SecretKey: combo.SecretKey("sk_<SECRET_KEY>"),
 	}
 
-	handler, err := combo.NewGmHandler(cfg, &GmListener{})
+	// 创建具有幂等性处理能力的 GmListener，使用 Redis 作为幂等数据存储
+	listener := combo.NewIdempotentGmListener(combo.IdempotentGmListenerConfig{
+		Store: combo.NewRedisIdempotencyStore(
+			combo.RedisIdempotencyStoreConfig{
+				// 这里不假设 Redis 的运维部署方式，游戏侧可自行灵活创建和配置 Redis Client
+				Client: redis.NewClient(&redis.Options{Addr: "localhost:6379"}),
+			},
+		),
+		Listener: &GmListener{},
+	})
+	handler, err := combo.NewGmHandler(cfg, listener)
 	if err != nil {
 		panic(err)
 	}
