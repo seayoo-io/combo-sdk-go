@@ -52,6 +52,8 @@ func NewMemoryIdempotencyStore() IdempotencyStore {
 // NewRedisIdempotencyStore 创建一个基于 Redis 的 IdempotencyStore 实现。
 //
 // 数据会存储在 Redis 中，可以保证数据的的高可用性和到期自动清理。推荐生产环境使用。
+//
+// 注意：本实现需要 Redis >= 7.0
 func NewRedisIdempotencyStore(cfg RedisIdempotencyStoreConfig) IdempotencyStore {
 	if cfg.Client == nil {
 		panic("missing required cfg.Client")
@@ -219,7 +221,7 @@ func (i *idempotentGmListener) previousResponse(req *GmRequest, record *idempote
 	if record.Args != string(req.Args) {
 		return nil, &GmErrorResponse{
 			Error:   GmError_IdempotencyMismatch,
-			Message: fmt.Sprintf("args mismatch, expecting %s, got %s", string(record.Args), string(req.Args)),
+			Message: fmt.Sprintf("args mismatch, expecting %s, got %s", record.Args, string(req.Args)),
 		}
 	}
 	return record.Resp, record.Error
@@ -261,6 +263,8 @@ type redisIdempotencyStore struct {
 
 // SetNX implements IdempotencyStore.
 func (s *redisIdempotencyStore) SetNX(ctx context.Context, key string, value string) (string, error) {
+	// Note: Using NX and GET options together requires Redis >= 7.0
+	// See: https://redis.io/docs/latest/commands/set/
 	oldValue, err := s.client.SetArgs(ctx, s.prefix+key, value, redis.SetArgs{
 		Mode: "NX",
 		TTL:  s.ttl,
