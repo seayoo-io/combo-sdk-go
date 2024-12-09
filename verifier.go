@@ -63,6 +63,9 @@ type IdentityPayload struct {
 	// 注意：WeixinUnionid 只在 IdP 为 weixin 时才会有值。
 	WeixinUnionid string
 
+	// DeviceId 是用户在登录时使用的设备的唯一 ID。
+	DeviceId string
+
 	// Distro 是游戏客户端的发行版本标识。
 	// 游戏侧可将 Distro 用于服务端数据埋点，以及特定的业务逻辑判断。
 	Distro string
@@ -104,6 +107,7 @@ type identityClaims struct {
 	ExternalId    string `json:"external_id"`
 	ExternalName  string `json:"external_name"`
 	WeixinUnionid string `json:"weixin_unionid"`
+	DeviceId      string `json:"device_id"`
 	Distro        string `json:"distro"`
 	Variant       string `json:"variant"`
 	Age           int    `json:"age"`
@@ -134,6 +138,7 @@ func (v *TokenVerifier) VerifyIdentityToken(tokenString string) (*IdentityPayloa
 		ExternalId:    claims.ExternalId,
 		ExternalName:  claims.ExternalName,
 		WeixinUnionid: claims.WeixinUnionid,
+		DeviceId:      claims.DeviceId,
 		Distro:        claims.Distro,
 		Variant:       claims.Variant,
 		Age:           claims.Age,

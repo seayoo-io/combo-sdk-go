@@ -84,6 +84,10 @@ type ShipOrderNotification struct {
 
 	// 游戏侧创建订单时提供的订单上下文，透传回游戏。
 	Context string `json:"context"`
+
+	// 是否是沙盒订单。沙盒订单意味着此订单并未产生真实的付款。
+	// 预期此字段仅用于记录日志和数据埋点。无论是否是沙盒订单，游戏侧都应当发货。
+	IsSandbox bool `json:"is_sandbox"`
 }
 
 // RefundNotification 是订单退款通知的数据结构，包含了被退款订单的详细信息。

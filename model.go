@@ -48,8 +48,8 @@ const (
 )
 
 const (
-	// 设备登录（游客）
-	IdP_Device IdP = "device"
+	// 游客登录
+	IdP_Guest IdP = "guest"
 
 	// 世游通行证
 	IdP_Seayoo IdP = "seayoo"
@@ -101,6 +101,21 @@ const (
 
 	// 雷电模拟器账号
 	IdP_Leidian IdP = "leidian"
+
+	// 猫窝游戏
+	IdP_Maowo IdP = "maowo"
+
+	// 联想
+	IdP_Lenovo = "lenovo"
+
+	// 魅族
+	IdP_Meizu = "meizu"
+
+	// 酷派
+	IdP_Coolpad = "coolpad"
+
+	// 努比亚
+	IdP_Nubia = "nubia"
 )
 
 func (e Endpoint) url(api string) string {
