@@ -47,7 +47,9 @@ type GmListener interface {
 type GmRequest struct {
 	// Version 是 GM 请求的的版本号。当前版本固定为 2.0。
 	Version string
-	// Id 是本次 GM 请求的唯一 ID。游戏后端可用此值来对通知进行去重处理。
+	// Origin 是发送本次 GM 请求的来源系统标识。可用于日志记录、数据埋点。
+	Origin string
+	// Id 是本次 GM 请求的唯一 ID。用于日志记录、调试、问题排查。
 	Id string
 	// IdempotencyKey 是本次 GM 请求的 Idempotency Key。如果有值则应当执行幂等处理逻辑。
 	IdempotencyKey string
@@ -142,6 +144,7 @@ var gmError2HttpStatus = map[GmError]int{
 
 type gmRequestBody struct {
 	Version        string          `json:"version"`
+	Origin         string          `json:"origin"`
 	RequestId      string          `json:"request_id"`
 	IdempotencyKey string          `json:"idempotency_key"`
 	Command        string          `json:"command"`
@@ -190,6 +193,7 @@ func (h *gmHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	resp, err := h.listener.HandleGmRequest(r.Context(), &GmRequest{
 		Version:        body.Version,
+		Origin:         body.Origin,
 		Id:             body.RequestId,
 		IdempotencyKey: body.IdempotencyKey,
 		Cmd:            body.Command,

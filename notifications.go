@@ -36,7 +36,7 @@ func NewNotificationHandler(cfg Config, listener NotificationListener) (http.Han
 	}, nil
 }
 
-// 每次通知的唯一 ID。游戏侧可用此值来对通知进行去重。
+// 每次通知的唯一 ID。游戏侧可用于日志记录、调试、问题排查。
 type NotificationId string
 
 // NotificationListener 是一个用于接收世游服务端推送的通知的接口。
