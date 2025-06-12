@@ -45,6 +45,9 @@ const (
 
 	// 微信小游戏
 	Platform_Weixin Platform = "weixin"
+
+	// 小游戏平台
+	Platform_WebGL Platform = "webgl"
 )
 
 const (
