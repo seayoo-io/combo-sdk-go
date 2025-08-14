@@ -48,6 +48,9 @@ const (
 
 	// WebGL 平台，包括微信、抖音等小游戏，以及 HTML5 网页游戏
 	Platform_WebGL Platform = "webgl"
+
+	// 华为的 HarmonyOS NEXT 鸿蒙应用开发平台
+	Platform_HarmonyOS Platform = "harmonyos"
 )
 
 const (
