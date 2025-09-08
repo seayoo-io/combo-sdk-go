@@ -5,5 +5,5 @@ const (
 	SdkName = "combo-sdk-go"
 
 	// Version of this SDK
-	SdkVersion = "0.3.1"
+	SdkVersion = "1.0.0"
 )

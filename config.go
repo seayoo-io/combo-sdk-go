@@ -25,7 +25,7 @@ func (cfg *Config) validate() error {
 	if cfg.GameId == "" {
 		return errors.New("missing required GameId")
 	}
-	if cfg.SecretKey == nil || len(cfg.SecretKey) == 0 {
+	if len(cfg.SecretKey) == 0 {
 		return errors.New("missing required SecretKey")
 	}
 	if !strings.HasPrefix(string(cfg.SecretKey), "sk_") {
