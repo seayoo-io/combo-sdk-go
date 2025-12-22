@@ -44,10 +44,15 @@ const (
 	Platform_macOS Platform = "macos"
 
 	// 微信小游戏
+	//
+	// Deprecated: 已被 Platform_WebGL 取代
 	Platform_Weixin Platform = "weixin"
 
 	// WebGL 平台，包括微信、抖音等小游戏，以及 HTML5 网页游戏
 	Platform_WebGL Platform = "webgl"
+
+	// 华为的 HarmonyOS NEXT 鸿蒙应用开发平台
+	Platform_HarmonyOS Platform = "harmonyos"
 )
 
 const (
@@ -119,6 +124,21 @@ const (
 
 	// 努比亚
 	IdP_Nubia = "nubia"
+
+	// 绝峰游戏
+	IdP_Juefeng = "juefeng"
+
+	// 魅拓游戏
+	Idp_Meituo IdP = "meituo"
+
+	// 微信小游戏
+	Idp_MinigameWeixin IdP = "minigame_weixin"
+
+	// MuMu 模拟器
+	Idp_Mumu IdP = "mumu"
+
+	// 虎牙游戏
+	Idp_Huya IdP = "huya"
 )
 
 func (e Endpoint) url(api string) string {
