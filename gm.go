@@ -102,6 +102,9 @@ const (
 
 	// 幂等处理重试请求时，请求内容和 idempotency_key 所对应的原始请求内容不一致。
 	GmError_IdempotencyMismatch GmError = "idempotency_mismatch"
+
+	// 未找到目标角色。用于查询角色信息或对角色执行操作（如发放奖励）时，指定的角色不存在。
+	GmError_RoleNotFound GmError = "role_not_found"
 )
 
 // 服务端错误。
@@ -132,6 +135,7 @@ var gmError2HttpStatus = map[GmError]int{
 	GmError_InvalidRequest:      http.StatusBadRequest,
 	GmError_InvalidCommand:      http.StatusBadRequest,
 	GmError_InvalidArgs:         http.StatusBadRequest,
+	GmError_RoleNotFound:        http.StatusNotFound,
 	GmError_ThrottlingError:     http.StatusTooManyRequests,
 	GmError_IdempotencyConflict: http.StatusConflict,
 	GmError_IdempotencyMismatch: http.StatusUnprocessableEntity,
