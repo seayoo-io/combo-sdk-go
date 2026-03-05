@@ -85,6 +85,10 @@ type IdentityPayload struct {
 	//	当某个用户真实年龄为 35 岁时，Age 可能返回 18
 	//	当某个用户真实年龄为 17 岁时，Age 可能返回 16
 	Age int
+
+	// RegTime 是用户 ID（Combo ID）注册时间戳。
+	// Unix timestamp in seconds。
+	RegTime int
 }
 
 // AdPayload 包含了激励广告的播放信息。
