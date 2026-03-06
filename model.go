@@ -134,11 +134,20 @@ const (
 	// 微信小游戏
 	Idp_MinigameWeixin IdP = "minigame_weixin"
 
+	// 抖音小游戏
+	Idp_MinigameDouyin IdP = "minigame_douyin"
+
 	// MuMu 模拟器
 	Idp_Mumu IdP = "mumu"
 
 	// 虎牙游戏
 	Idp_Huya IdP = "huya"
+
+	// 好游快爆
+	Idp_Hykb IdP = "hykb"
+
+	// 233 乐园
+	IdP_233 IdP = "233"
 )
 
 func (e Endpoint) url(api string) string {
