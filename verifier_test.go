@@ -1,6 +1,7 @@
 package combo
 
 import (
+	"crypto/rand"
 	"strings"
 	"testing"
 	"time"
@@ -255,6 +256,130 @@ func TestVerifyAdToken(t *testing.T) {
 	}
 	if payload.ImpressionId != "impression_001" {
 		t.Errorf("expected ImpressionId impression_001, got %s", payload.ImpressionId)
+	}
+}
+
+func encryptSessionKey(t *testing.T, sk SecretKey, plaintext string) string {
+	t.Helper()
+	nonce := make([]byte, 12)
+	if _, err := rand.Read(nonce); err != nil {
+		t.Fatalf("failed to generate nonce: %v", err)
+	}
+	encrypted, err := encryptAESGCM(sk, plaintext, nonce)
+	if err != nil {
+		t.Fatalf("failed to encrypt session key: %v", err)
+	}
+	return encrypted
+}
+
+func TestVerifyIdentityTokenWithWeixinSessionKey(t *testing.T) {
+	v := newTestVerifier(t)
+	sk := SecretKey(testSecretKey)
+	originalSessionKey := "test_weixin_session_key_value"
+	encryptedSessionKey := encryptSessionKey(t, sk, originalSessionKey)
+
+	claims := &identityClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    string(testEndpoint),
+			Subject:   "combo_123",
+			Audience:  jwt.ClaimStrings{string(testGameId)},
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+		Scope:            "auth",
+		IdP:              "weixin",
+		ExternalId:       "wx_openid_123",
+		WeixinUnionid:    "wx_unionid_123",
+		WeixinSessionKey: encryptedSessionKey,
+	}
+
+	tokenString := signToken(t, claims)
+	payload, err := v.VerifyIdentityToken(tokenString)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if payload.WeixinSessionKey != originalSessionKey {
+		t.Errorf("expected WeixinSessionKey %q, got %q", originalSessionKey, payload.WeixinSessionKey)
+	}
+}
+
+func TestVerifyIdentityTokenWithoutWeixinSessionKey(t *testing.T) {
+	v := newTestVerifier(t)
+
+	claims := &identityClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    string(testEndpoint),
+			Subject:   "combo_123",
+			Audience:  jwt.ClaimStrings{string(testGameId)},
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+		Scope: "auth",
+		IdP:   "google",
+	}
+
+	tokenString := signToken(t, claims)
+	payload, err := v.VerifyIdentityToken(tokenString)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if payload.WeixinSessionKey != "" {
+		t.Errorf("expected empty WeixinSessionKey, got %q", payload.WeixinSessionKey)
+	}
+}
+
+func TestVerifyIdentityTokenWithInvalidWeixinSessionKey(t *testing.T) {
+	v := newTestVerifier(t)
+
+	claims := &identityClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    string(testEndpoint),
+			Subject:   "combo_123",
+			Audience:  jwt.ClaimStrings{string(testGameId)},
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+		Scope:            "auth",
+		IdP:              "weixin",
+		WeixinSessionKey: "not-valid-base64!@#$",
+	}
+
+	tokenString := signToken(t, claims)
+	_, err := v.VerifyIdentityToken(tokenString)
+	if err == nil {
+		t.Fatal("expected error for invalid weixin_session_key")
+	}
+	if !strings.Contains(err.Error(), "weixin_session_key") {
+		t.Fatalf("expected weixin_session_key error, got: %v", err)
+	}
+}
+
+func TestVerifyIdentityTokenWithTamperedWeixinSessionKey(t *testing.T) {
+	v := newTestVerifier(t)
+
+	// 使用错误的密钥加密
+	wrongKey := SecretKey("sk_wrong_key_for_encrypt")
+	encryptedSessionKey := encryptSessionKey(t, wrongKey, "session_key_value")
+
+	claims := &identityClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    string(testEndpoint),
+			Subject:   "combo_123",
+			Audience:  jwt.ClaimStrings{string(testGameId)},
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+		Scope:            "auth",
+		IdP:              "weixin",
+		WeixinSessionKey: encryptedSessionKey,
+	}
+
+	tokenString := signToken(t, claims)
+	_, err := v.VerifyIdentityToken(tokenString)
+	if err == nil {
+		t.Fatal("expected error for tampered weixin_session_key")
 	}
 }
 

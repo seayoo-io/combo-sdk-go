@@ -1,6 +1,10 @@
 package combo
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -63,6 +67,12 @@ type IdentityPayload struct {
 	// 注意：WeixinUnionid 只在 IdP 为 weixin 时才会有值。
 	WeixinUnionid string
 
+	// WeixinSessionKey 是用户在微信小游戏登录时，从微信服务端获得的会话密钥 session_key。
+	// 该字段在 Identity Token 中以 AES-256-GCM 加密存储，SDK 会自动解密。
+	//
+	// 注意：WeixinSessionKey 只在 IdP 为 Idp_MinigameWeixin 时才会有值。
+	WeixinSessionKey string
+
 	// DeviceId 是用户在登录时使用的设备的唯一 ID。
 	DeviceId string
 
@@ -106,16 +116,17 @@ type AdPayload struct {
 
 type identityClaims struct {
 	jwt.RegisteredClaims
-	Scope         string `json:"scope"`
-	IdP           string `json:"idp"`
-	ExternalId    string `json:"external_id"`
-	ExternalName  string `json:"external_name"`
-	WeixinUnionid string `json:"weixin_unionid"`
-	DeviceId      string `json:"device_id"`
-	Distro        string `json:"distro"`
-	Variant       string `json:"variant"`
-	Age           int    `json:"age"`
-	RegTime       int64  `json:"reg_time"`
+	Scope            string `json:"scope"`
+	IdP              string `json:"idp"`
+	ExternalId       string `json:"external_id"`
+	ExternalName     string `json:"external_name"`
+	WeixinUnionid    string `json:"weixin_unionid"`
+	WeixinSessionKey string `json:"weixin_session_key"`
+	DeviceId         string `json:"device_id"`
+	Distro           string `json:"distro"`
+	Variant          string `json:"variant"`
+	Age              int    `json:"age"`
+	RegTime          int64  `json:"reg_time"`
 }
 
 type adClaims struct {
@@ -137,17 +148,26 @@ func (v *TokenVerifier) VerifyIdentityToken(tokenString string) (*IdentityPayloa
 	if claims.Scope != identityTokenScope {
 		return nil, fmt.Errorf("invalid scope: %s", claims.Scope)
 	}
+	var weixinSessionKey string
+	if claims.WeixinSessionKey != "" {
+		decrypted, err := decryptAESGCM(v.key, claims.WeixinSessionKey)
+		if err != nil {
+			return nil, fmt.Errorf("error decrypting weixin_session_key: %w", err)
+		}
+		weixinSessionKey = decrypted
+	}
 	return &IdentityPayload{
-		ComboId:       claims.Subject,
-		IdP:           IdP(claims.IdP),
-		ExternalId:    claims.ExternalId,
-		ExternalName:  claims.ExternalName,
-		WeixinUnionid: claims.WeixinUnionid,
-		DeviceId:      claims.DeviceId,
-		Distro:        claims.Distro,
-		Variant:       claims.Variant,
-		Age:           claims.Age,
-		RegTime:       claims.RegTime,
+		ComboId:          claims.Subject,
+		IdP:              IdP(claims.IdP),
+		ExternalId:       claims.ExternalId,
+		ExternalName:     claims.ExternalName,
+		WeixinUnionid:    claims.WeixinUnionid,
+		WeixinSessionKey: weixinSessionKey,
+		DeviceId:         claims.DeviceId,
+		Distro:           claims.Distro,
+		Variant:          claims.Variant,
+		Age:              claims.Age,
+		RegTime:          claims.RegTime,
 	}, nil
 }
 
@@ -186,6 +206,57 @@ func (v *TokenVerifier) keyFunc(token *jwt.Token) (interface{}, error) {
 		return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 	}
 	return []byte(v.key), nil
+}
+
+// deriveAESKey 从 SecretKey 派生 AES-256 密钥（32 字节）。
+// 使用 SHA-256 哈希，输出恰好为 32 字节。
+func deriveAESKey(sk SecretKey) []byte {
+	hash := sha256.Sum256(sk)
+	return hash[:]
+}
+
+// decryptAESGCM 使用 AES-256-GCM 解密 base64 编码的密文。
+// 密文格式为 base64(nonce || ciphertext)，其中 nonce 为 12 字节。
+func decryptAESGCM(sk SecretKey, encoded string) (string, error) {
+	data, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		return "", fmt.Errorf("base64 decode error: %w", err)
+	}
+	key := deriveAESKey(sk)
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", fmt.Errorf("aes cipher error: %w", err)
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", fmt.Errorf("gcm error: %w", err)
+	}
+	nonceSize := gcm.NonceSize()
+	if len(data) < nonceSize {
+		return "", fmt.Errorf("ciphertext too short")
+	}
+	nonce, ciphertext := data[:nonceSize], data[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return "", fmt.Errorf("gcm decrypt error: %w", err)
+	}
+	return string(plaintext), nil
+}
+
+// encryptAESGCM 使用 AES-256-GCM 加密明文，返回 base64(nonce || ciphertext)。
+func encryptAESGCM(sk SecretKey, plaintext string, nonce []byte) (string, error) {
+	key := deriveAESKey(sk)
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", fmt.Errorf("aes cipher error: %w", err)
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", fmt.Errorf("gcm error: %w", err)
+	}
+	ciphertext := gcm.Seal(nil, nonce, []byte(plaintext), nil)
+	result := append(nonce, ciphertext...)
+	return base64.StdEncoding.EncodeToString(result), nil
 }
 
 func init() {
