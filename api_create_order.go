@@ -53,14 +53,6 @@ type OrderMeta struct {
 
 	// 游戏角色的等级。
 	RoleLevel int `json:"role_level,omitempty"`
-
-	// 微信小游戏的 App ID。
-	// 微信小游戏的 iOS 支付场景必须传入，即 Platform == Platform_Weixin
-	WeixinAppid string `json:"weixin_appid,omitempty"`
-
-	// 微信小游戏的玩家 OpenID。
-	// 微信小游戏的 iOS 支付场景必须传入，即 Platform == Platform_Weixin
-	WeixinOpenid string `json:"weixin_openid,omitempty"`
 }
 
 type CreateOrderOutput struct {

@@ -60,16 +60,15 @@ func TestVerifyIdentityToken(t *testing.T) {
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
-		Scope:         "auth",
-		IdP:           "google",
-		ExternalId:    "ext_123",
-		ExternalName:  "TestUser",
-		WeixinUnionid: "",
-		DeviceId:      "device_abc",
-		Distro:        "default",
-		Variant:       "v1",
-		Age:           25,
-		RegTime:       1700000000,
+		Scope:        "auth",
+		IdP:          "google",
+		ExternalId:   "ext_123",
+		ExternalName: "TestUser",
+		DeviceId:     "device_abc",
+		Distro:       "default",
+		Variant:      "v1",
+		Age:          25,
+		RegTime:      1700000000,
 	}
 
 	tokenString := signToken(t, claims)
@@ -289,7 +288,6 @@ func TestVerifyIdentityTokenWithWeixinSessionKey(t *testing.T) {
 		Scope:            "auth",
 		IdP:              "weixin",
 		ExternalId:       "wx_openid_123",
-		WeixinUnionid:    "wx_unionid_123",
 		WeixinSessionKey: encryptedSessionKey,
 	}
 

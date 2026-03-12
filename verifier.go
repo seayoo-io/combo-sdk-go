@@ -61,12 +61,6 @@ type IdentityPayload struct {
 	// ExternalName 是用户在外部 IdP 中的名称，通常是用户的昵称。
 	ExternalName string
 
-	// WeixinUnionid 是用户在微信中的 UnionId。
-	// 游戏侧可以使用 WeixinUnionid 实现多端互通。
-	//
-	// 注意：WeixinUnionid 只在 IdP 为 weixin 时才会有值。
-	WeixinUnionid string
-
 	// WeixinSessionKey 是用户在微信小游戏登录时，从微信服务端获得的会话密钥 session_key。
 	// 该字段在 Identity Token 中以 AES-256-GCM 加密存储，SDK 会自动解密。
 	//
@@ -120,7 +114,6 @@ type identityClaims struct {
 	IdP              string `json:"idp"`
 	ExternalId       string `json:"external_id"`
 	ExternalName     string `json:"external_name"`
-	WeixinUnionid    string `json:"weixin_unionid"`
 	WeixinSessionKey string `json:"weixin_session_key"`
 	DeviceId         string `json:"device_id"`
 	Distro           string `json:"distro"`
@@ -161,7 +154,6 @@ func (v *TokenVerifier) VerifyIdentityToken(tokenString string) (*IdentityPayloa
 		IdP:              IdP(claims.IdP),
 		ExternalId:       claims.ExternalId,
 		ExternalName:     claims.ExternalName,
-		WeixinUnionid:    claims.WeixinUnionid,
 		WeixinSessionKey: weixinSessionKey,
 		DeviceId:         claims.DeviceId,
 		Distro:           claims.Distro,

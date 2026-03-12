@@ -43,11 +43,6 @@ const (
 	// macOS 桌面平台
 	Platform_macOS Platform = "macos"
 
-	// 微信小游戏
-	//
-	// Deprecated: 已被 Platform_WebGL 取代
-	Platform_Weixin Platform = "weixin"
-
 	// WebGL 平台，包括微信、抖音等小游戏，以及 HTML5 网页游戏
 	Platform_WebGL Platform = "webgl"
 
