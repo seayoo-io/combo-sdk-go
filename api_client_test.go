@@ -242,3 +242,48 @@ func TestClientLeaveGame(t *testing.T) {
 		t.Fatal("expected non-nil output")
 	}
 }
+
+func TestClientVoiceModerationRequest(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasSuffix(r.URL.Path, "/v1/server/voice-moderation-request") {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+		}
+		var input VoiceModerationRequestInput
+		json.NewDecoder(r.Body).Decode(&input)
+		if input.RoomInstanceId != "room_001" {
+			t.Errorf("expected room_instance_id room_001, got %s", input.RoomInstanceId)
+		}
+		if input.ServerId != 1 {
+			t.Errorf("expected server_id 1, got %d", input.ServerId)
+		}
+		if input.RequesterRoleId != "role_001" {
+			t.Errorf("expected requester_role_id role_001, got %s", input.RequesterRoleId)
+		}
+		if len(input.TargetRoleIds) != 2 {
+			t.Errorf("expected 2 target_role_ids, got %d", len(input.TargetRoleIds))
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{})
+	}))
+	defer server.Close()
+
+	cfg := Config{
+		Endpoint:  Endpoint(server.URL),
+		GameId:    testGameId,
+		SecretKey: SecretKey(testSecretKey),
+	}
+	client, _ := NewClient(cfg)
+
+	output, err := client.VoiceModerationRequest(context.Background(), &VoiceModerationRequestInput{
+		RoomInstanceId:  "room_001",
+		ServerId:        1,
+		RequesterRoleId: "role_001",
+		TargetRoleIds:   []string{"role_002", "role_003"},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if output == nil {
+		t.Fatal("expected non-nil output")
+	}
+}
