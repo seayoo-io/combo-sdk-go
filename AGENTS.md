@@ -41,7 +41,7 @@ make tidy      # Clean and tidy go.mod/go.sum
 | Types & Config | `model.go`, `config.go`, `version.go`, `user_agent.go` | Core types, enums, configuration validation |
 | HTTP Signing | `signer.go` | SEAYOO-HMAC-SHA256 signing and verification (5-min time skew tolerance) |
 | API Client | `api_client.go`, `api_response.go` | Base HTTP client with auto-signing |
-| APIs | `api_create_order.go`, `api_enter_game.go`, `api_leave_game.go` | Individual API implementations |
+| APIs | `api_create_order.go`, `api_enter_game.go`, `api_leave_game.go`, `api_voice_moderation_request.go`, `api_send_otp.go`, `api_verify_otp.go` | Individual API implementations |
 | Notifications | `notifications.go` | HTTP handler for server push notifications (ship order, refund) |
 | GM Commands | `gm.go`, `gm_idempotency.go` | GM command handler with optional idempotency (Redis or in-memory) |
 | Token Verification | `verifier.go` | JWT (HMAC-SHA256) token verification for identity and ad tokens |

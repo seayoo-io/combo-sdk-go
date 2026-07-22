@@ -243,6 +243,114 @@ func TestClientLeaveGame(t *testing.T) {
 	}
 }
 
+func TestClientSendOtp(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasSuffix(r.URL.Path, "/v1/server/send-otp") {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+		}
+		var input SendOtpInput
+		json.NewDecoder(r.Body).Decode(&input)
+		if input.ComboId != "combo_001" {
+			t.Errorf("expected combo_id combo_001, got %s", input.ComboId)
+		}
+		if input.Channel != OtpChannel_SMS {
+			t.Errorf("expected channel sms, got %s", input.Channel)
+		}
+		if input.Action != "change_security_password" {
+			t.Errorf("expected action change_security_password, got %s", input.Action)
+		}
+		if input.Meta.RoleId != "role_001" {
+			t.Errorf("expected meta.role_id role_001, got %+v", input.Meta)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"mobile":       "138******88",
+			"otp_ttl":      300,
+			"otp_cooldown": 60,
+		})
+	}))
+	defer server.Close()
+
+	cfg := Config{
+		Endpoint:  Endpoint(server.URL),
+		GameId:    testGameId,
+		SecretKey: SecretKey(testSecretKey),
+	}
+	client, _ := NewClient(cfg)
+
+	output, err := client.SendOtp(context.Background(), &SendOtpInput{
+		ComboId: "combo_001",
+		// Channel 不填写时默认为 sms
+		Action: "change_security_password",
+		Meta: OtpMeta{
+			ZoneId:    "1",
+			ServerId:  "1",
+			RoleId:    "role_001",
+			RoleName:  "小明",
+			RoleLevel: 3,
+		},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if output.Mobile != "138******88" {
+		t.Fatalf("expected mobile 138******88, got %s", output.Mobile)
+	}
+	if output.OtpTtl != 300 {
+		t.Fatalf("expected otp_ttl 300, got %d", output.OtpTtl)
+	}
+	if output.OtpCooldown != 60 {
+		t.Fatalf("expected otp_cooldown 60, got %d", output.OtpCooldown)
+	}
+}
+
+func TestClientVerifyOtp(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasSuffix(r.URL.Path, "/v1/server/verify-otp") {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+		}
+		var input VerifyOtpInput
+		json.NewDecoder(r.Body).Decode(&input)
+		if input.ComboId != "combo_001" {
+			t.Errorf("expected combo_id combo_001, got %s", input.ComboId)
+		}
+		if input.Channel != OtpChannel_SMS {
+			t.Errorf("expected channel sms, got %s", input.Channel)
+		}
+		if input.Action != "change_security_password" {
+			t.Errorf("expected action change_security_password, got %s", input.Action)
+		}
+		if input.Otp != "658741" {
+			t.Errorf("expected otp 658741, got %s", input.Otp)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"valid": true,
+		})
+	}))
+	defer server.Close()
+
+	cfg := Config{
+		Endpoint:  Endpoint(server.URL),
+		GameId:    testGameId,
+		SecretKey: SecretKey(testSecretKey),
+	}
+	client, _ := NewClient(cfg)
+
+	output, err := client.VerifyOtp(context.Background(), &VerifyOtpInput{
+		ComboId: "combo_001",
+		Channel: OtpChannel_SMS,
+		Action:  "change_security_password",
+		Otp:     "658741",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !output.Valid {
+		t.Fatal("expected valid true")
+	}
+}
+
 func TestClientVoiceModerationRequest(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.HasSuffix(r.URL.Path, "/v1/server/voice-moderation-request") {
