@@ -13,6 +13,7 @@ import (
 const (
 	notificationType_ShipOrder = "ship_order"
 	notificationType_Refund    = "refund"
+	notificationType_DataTags  = "data_tags"
 )
 
 // NewNotificationHandler 创建一个用于接收世游服务端推送的通知的 http.Handler。
@@ -57,6 +58,13 @@ type NotificationListener interface {
 	// - 如果游戏内成功处理了退款通知，则应当返回 nil。
 	// - 如果游戏内处理退款时出现错误，则应当返回对应的 error。世游服务端会在稍后重试推送退款通知。
 	HandleRefund(ctx context.Context, id NotificationId, payload *RefundNotification) error
+
+	// HandleDataTags 用于处理数据标签通知。
+	// 世游服务端会将约定好的数据标签批量推送给游戏侧。
+	// 预期游戏侧在接收到数据标签通知后，将这些数据标签持久化存储。
+	// - 如果游戏内成功处理了数据标签通知，则应当返回 nil。
+	// - 如果游戏内处理数据标签时出现错误，则应当返回对应的 error。世游服务端会在稍后重试推送数据标签通知。
+	HandleDataTags(ctx context.Context, id NotificationId, payload *DataTagsNotification) error
 }
 
 // ShipOrderNotification 是订单发货通知的数据结构，包含了已支付订单的详细信息。
@@ -117,6 +125,27 @@ type RefundNotification struct {
 	Context string `json:"context"`
 }
 
+// DataTag 表示单条数据标签，即某个数据实体的某个标签。
+type DataTag struct {
+	// 标签所属实体的类型。例如 `role` 代表实体类型为游戏角色。
+	EntityType string `json:"entity_type"`
+
+	// 标签所属实体的唯一标识。
+	EntityId string `json:"entity_id"`
+
+	// 标签名称。
+	TagName string `json:"tag_name"`
+
+	// 标签值。
+	TagValue string `json:"tag_value"`
+}
+
+// DataTagsNotification 是数据标签通知的数据结构，包含一批数据标签。
+type DataTagsNotification struct {
+	// 一批数据标签，数组长度不定。
+	Tags []DataTag `json:"tags"`
+}
+
 type notificationRequestBody struct {
 	// 世游服务端通知的版本号。当前版本固定为 1.0。
 	Version string `json:"version"`
@@ -173,6 +202,16 @@ func (h *notificationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 		if err := h.listener.HandleRefund(r.Context(), NotificationId(body.Id), &payload); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	case notificationType_DataTags:
+		var payload DataTagsNotification
+		if err := json.Unmarshal(body.Data, &payload); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if err := h.listener.HandleDataTags(r.Context(), NotificationId(body.Id), &payload); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
