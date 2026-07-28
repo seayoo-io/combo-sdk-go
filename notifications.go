@@ -60,8 +60,8 @@ type NotificationListener interface {
 	HandleRefund(ctx context.Context, id NotificationId, payload *RefundNotification) error
 
 	// HandleDataTags 用于处理数据标签通知。
-	// 世游服务端会将约定好的用户标签数据批量推送给游戏侧。
-	// data 中包含一个用户标签的数组，数组长度由双方提前约定。
+	// 世游服务端会将约定好的数据标签批量推送给游戏侧。
+	// 预期游戏侧在接收到数据标签通知后，将这些数据标签持久化存储。
 	// - 如果游戏内成功处理了数据标签通知，则应当返回 nil。
 	// - 如果游戏内处理数据标签时出现错误，则应当返回对应的 error。世游服务端会在稍后重试推送数据标签通知。
 	HandleDataTags(ctx context.Context, id NotificationId, payload *DataTagsNotification) error
@@ -125,9 +125,9 @@ type RefundNotification struct {
 	Context string `json:"context"`
 }
 
-// DataTag 表示单条用户标签数据。
+// DataTag 表示单条数据标签，即某个数据实体的某个标签。
 type DataTag struct {
-	// 标签所属实体的类型。例如 role。
+	// 标签所属实体的类型。例如 `role` 代表实体类型为游戏角色。
 	EntityType string `json:"entity_type"`
 
 	// 标签所属实体的唯一标识。
@@ -140,10 +140,9 @@ type DataTag struct {
 	TagValue string `json:"tag_value"`
 }
 
-// DataTagsNotification 是数据标签通知的数据结构，包含一个用户标签的数组。
-// 数组长度由游戏侧与世游侧提前约定。
+// DataTagsNotification 是数据标签通知的数据结构，包含一批数据标签。
 type DataTagsNotification struct {
-	// 用户标签数组。
+	// 一批数据标签，数组长度不定。
 	Tags []DataTag `json:"tags"`
 }
 
