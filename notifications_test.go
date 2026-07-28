@@ -14,10 +14,13 @@ import (
 type mockNotificationListener struct {
 	shipOrderCalled bool
 	refundCalled    bool
+	dataTagsCalled  bool
 	shipOrderErr    error
 	refundErr       error
+	dataTagsErr     error
 	lastShipOrder   *ShipOrderNotification
 	lastRefund      *RefundNotification
+	lastDataTags    *DataTagsNotification
 	lastId          NotificationId
 }
 
@@ -33,6 +36,13 @@ func (m *mockNotificationListener) HandleRefund(_ context.Context, id Notificati
 	m.lastRefund = payload
 	m.lastId = id
 	return m.refundErr
+}
+
+func (m *mockNotificationListener) HandleDataTags(_ context.Context, id NotificationId, payload *DataTagsNotification) error {
+	m.dataTagsCalled = true
+	m.lastDataTags = payload
+	m.lastId = id
+	return m.dataTagsErr
 }
 
 func newTestNotificationHandler(t *testing.T, listener NotificationListener) (http.Handler, *httpSigner) {
@@ -195,6 +205,84 @@ func TestNotificationHandlerRefund(t *testing.T) {
 	}
 	if listener.lastRefund.OrderId != "order_002" {
 		t.Fatalf("expected order_id order_002, got %s", listener.lastRefund.OrderId)
+	}
+}
+
+func TestNotificationHandlerDataTags(t *testing.T) {
+	listener := &mockNotificationListener{}
+	handler, signer := newTestNotificationHandler(t, listener)
+
+	dataTags := DataTagsNotification{
+		Tags: []DataTag{
+			{
+				EntityType: "role",
+				EntityId:   "126250012",
+				TagName:    "payment_score",
+				TagValue:   "9999",
+			},
+			{
+				EntityType: "role",
+				EntityId:   "126250012",
+				TagName:    "anchor",
+				TagValue:   "dasima",
+			},
+		},
+	}
+	dataBytes, _ := json.Marshal(dataTags)
+	body := notificationRequestBody{
+		Version: "1.0",
+		Id:      "notif_005",
+		Type:    "data_tags",
+		Data:    dataBytes,
+	}
+	bodyBytes, _ := json.Marshal(body)
+
+	req := signedNotificationRequest(t, signer, bodyBytes)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected %d, got %d: %s", http.StatusOK, rec.Code, rec.Body.String())
+	}
+	if !listener.dataTagsCalled {
+		t.Fatal("HandleDataTags was not called")
+	}
+	if listener.lastId != "notif_005" {
+		t.Fatalf("expected notification id notif_005, got %s", listener.lastId)
+	}
+	if len(listener.lastDataTags.Tags) != 2 {
+		t.Fatalf("expected 2 tags, got %d", len(listener.lastDataTags.Tags))
+	}
+	first := listener.lastDataTags.Tags[0]
+	if first.EntityType != "role" || first.EntityId != "126250012" ||
+		first.TagName != "payment_score" || first.TagValue != "9999" {
+		t.Fatalf("unexpected first tag: %+v", first)
+	}
+}
+
+func TestNotificationHandlerDataTagsError(t *testing.T) {
+	listener := &mockNotificationListener{
+		dataTagsErr: errors.New("handle data tags failed"),
+	}
+	handler, signer := newTestNotificationHandler(t, listener)
+
+	dataBytes, _ := json.Marshal(DataTagsNotification{
+		Tags: []DataTag{{EntityType: "role", EntityId: "126250012", TagName: "payment_score", TagValue: "0"}},
+	})
+	body := notificationRequestBody{
+		Version: "1.0",
+		Id:      "notif_006",
+		Type:    "data_tags",
+		Data:    dataBytes,
+	}
+	bodyBytes, _ := json.Marshal(body)
+
+	req := signedNotificationRequest(t, signer, bodyBytes)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected %d, got %d", http.StatusInternalServerError, rec.Code)
 	}
 }
 
