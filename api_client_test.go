@@ -367,8 +367,14 @@ func TestClientVoiceModerationRequest(t *testing.T) {
 		if input.RequesterRoleId != "role_001" {
 			t.Errorf("expected requester_role_id role_001, got %s", input.RequesterRoleId)
 		}
+		if input.RequesterComboId != "1260418509000005" {
+			t.Errorf("expected requester_combo_id 1260418509000005, got %s", input.RequesterComboId)
+		}
 		if len(input.TargetRoleIds) != 2 {
 			t.Errorf("expected 2 target_role_ids, got %d", len(input.TargetRoleIds))
+		}
+		if len(input.Reasons) != 2 || input.Reasons[0] != "辱骂" {
+			t.Errorf("unexpected reasons: %v", input.Reasons)
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{})
@@ -383,10 +389,12 @@ func TestClientVoiceModerationRequest(t *testing.T) {
 	client, _ := NewClient(cfg)
 
 	output, err := client.VoiceModerationRequest(context.Background(), &VoiceModerationRequestInput{
-		RoomInstanceId:  "room_001",
-		ServerId:        1,
-		RequesterRoleId: "role_001",
-		TargetRoleIds:   []string{"role_002", "role_003"},
+		RoomInstanceId:   "room_001",
+		ServerId:         1,
+		RequesterRoleId:  "role_001",
+		RequesterComboId: "1260418509000005",
+		TargetRoleIds:    []string{"role_002", "role_003"},
+		Reasons:          []string{"辱骂", "开麦噪音"},
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
