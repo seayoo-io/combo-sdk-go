@@ -130,15 +130,18 @@ func TestNotificationHandlerShipOrder(t *testing.T) {
 	handler, signer := newTestNotificationHandler(t, listener)
 
 	shipData := ShipOrderNotification{
-		OrderId:     "order_001",
-		ReferenceId: "ref_001",
-		ComboId:     "combo_001",
-		ProductId:   "product_001",
-		Quantity:    1,
-		Currency:    "CNY",
-		Amount:      648,
-		Context:     "test_context",
-		IsSandbox:   false,
+		OrderId:                 "order_001",
+		ReferenceId:             "ref_001",
+		ComboId:                 "combo_001",
+		ProductId:               "product_001",
+		Quantity:                1,
+		Currency:                "CNY",
+		Amount:                  648,
+		Context:                 "test_context",
+		IsSandbox:               false,
+		PaidCurrency:            "CNY",
+		PaidAmount:              0,
+		AppStoreOfferIdentifier: "vip666",
 	}
 	dataBytes, _ := json.Marshal(shipData)
 	body := notificationRequestBody{
@@ -167,6 +170,15 @@ func TestNotificationHandlerShipOrder(t *testing.T) {
 	}
 	if listener.lastShipOrder.Amount != 648 {
 		t.Fatalf("expected amount 648, got %d", listener.lastShipOrder.Amount)
+	}
+	if listener.lastShipOrder.PaidCurrency != "CNY" {
+		t.Fatalf("expected paid_currency CNY, got %s", listener.lastShipOrder.PaidCurrency)
+	}
+	if listener.lastShipOrder.PaidAmount != 0 {
+		t.Fatalf("expected paid_amount 0, got %d", listener.lastShipOrder.PaidAmount)
+	}
+	if listener.lastShipOrder.AppStoreOfferIdentifier != "vip666" {
+		t.Fatalf("expected app_store_offer_identifier vip666, got %s", listener.lastShipOrder.AppStoreOfferIdentifier)
 	}
 }
 
