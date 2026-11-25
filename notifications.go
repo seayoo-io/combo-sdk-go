@@ -96,6 +96,15 @@ type ShipOrderNotification struct {
 	// 是否是沙盒订单。沙盒订单意味着此订单并未产生真实的付款。
 	// 预期此字段仅用于记录日志和数据埋点。无论是否是沙盒订单，游戏侧都应当发货。
 	IsSandbox bool `json:"is_sandbox"`
+
+	// 实付币种代码。例如 USD CNY。可能与订单币种 Currency 不同。
+	PaidCurrency string `json:"paid_currency"`
+
+	// 玩家实付金额，单位为分。可能与订单 Amount 不同，例如免费兑换的 App Store Offer Code 订单为 0。
+	PaidAmount int `json:"paid_amount"`
+
+	// 交易实际使用的 App Store Offer 标识（offerIdentifier），只在 App Store Offer Code 兑换订单中出现。
+	AppStoreOfferIdentifier string `json:"app_store_offer_identifier,omitempty"`
 }
 
 // RefundNotification 是订单退款通知的数据结构，包含了被退款订单的详细信息。

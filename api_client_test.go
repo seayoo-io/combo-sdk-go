@@ -71,6 +71,12 @@ func TestClientCreateOrder(t *testing.T) {
 		if r.Header.Get("Authorization") == "" {
 			t.Error("expected Authorization header")
 		}
+		var body map[string]any
+		json.NewDecoder(r.Body).Decode(&body)
+		meta, _ := body["meta"].(map[string]any)
+		if meta["redeem_app_store_offer_code"] != true {
+			t.Errorf("expected meta.redeem_app_store_offer_code true, got %+v", body["meta"])
+		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("x-trace-id", "trace_001")
@@ -99,6 +105,9 @@ func TestClientCreateOrder(t *testing.T) {
 		ProductId:   "product_001",
 		Quantity:    1,
 		NotifyUrl:   "https://example.com/notify",
+		Meta: OrderMeta{
+			RedeemAppStoreOfferCode: true,
+		},
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

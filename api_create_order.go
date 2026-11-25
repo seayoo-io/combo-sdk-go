@@ -53,6 +53,10 @@ type OrderMeta struct {
 
 	// 游戏角色的等级。
 	RoleLevel int `json:"role_level,omitempty"`
+
+	// 是否为 App Store Offer Code 兑换订单。
+	// 为 true 时，本单只能通过 App Store Offer Code 兑换；为 false 或未赋值时，只能通过内购购买。
+	RedeemAppStoreOfferCode bool `json:"redeem_app_store_offer_code,omitempty"`
 }
 
 type CreateOrderOutput struct {
